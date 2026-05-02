@@ -23,3 +23,9 @@ export const INIT_TABLES = Array.from({ length: 12 }, (_, i) => ({
 }))
 
 export const fmt = (n) => 'Rp ' + n.toLocaleString('id-ID')
+
+export const stockInfo = (stock) => {
+  if (stock <= 0) return { label: 'Habis',        cls: 'bg-pos-red/20 text-pos-red',    dot: 'bg-pos-red' }
+  if (stock <= 5)  return { label: 'Stok Menipis', cls: 'bg-pos-orange/20 text-pos-orange', dot: 'bg-pos-orange' }
+  return             { label: 'Stok Aman',       cls: 'bg-pos-green/20 text-pos-green',  dot: 'bg-pos-green' }
+}

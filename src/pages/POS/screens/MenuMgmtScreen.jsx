@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { MENU_DATA } from '../../../data/menu'
-import { fmt } from '../../../data/constants'
+import { fmt, stockInfo } from '../../../data/constants'
 import { DB } from '../../../lib/db'
 
 const CATEGORIES = Object.keys(MENU_DATA)
@@ -105,48 +105,48 @@ export default function MenuMgmtScreen() {
         <div className="bg-pos-card border border-pos-border rounded-xl overflow-hidden">
           <div className="grid grid-cols-12 px-5 py-3 border-b border-pos-border text-cream/40 text-xs font-medium">
             <span className="col-span-1">Icon</span>
-            <span className="col-span-4">Nama</span>
+            <span className="col-span-3">Nama</span>
             <span className="col-span-2">Kategori</span>
             <span className="col-span-2 text-right">Harga</span>
-            <span className="col-span-1 text-center">Status</span>
+            <span className="col-span-1 text-center">Stok</span>
+            <span className="col-span-1 text-center">Status Stok</span>
             <span className="col-span-2 text-right">Aksi</span>
           </div>
           <div className="divide-y divide-pos-border/50">
-            {filtered.map((item) => (
-              <div key={item.id} className="grid grid-cols-12 px-5 py-3 hover:bg-pos-card-hover items-center">
-                <span className="col-span-1 text-xl">{item.emoji}</span>
-                <span className="col-span-4 text-cream/90 text-sm">{item.name}</span>
-                <span className="col-span-2 text-cream/50 text-xs">{item.cat}</span>
-                <span className="col-span-2 text-right text-gold text-sm font-medium">{fmt(item.price)}</span>
-                <span className="col-span-1 flex justify-center">
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${
-                      item.active !== false
-                        ? 'bg-pos-green/20 text-pos-green'
-                        : 'bg-pos-red/20 text-pos-red'
-                    }`}
-                  >
-                    {item.active !== false ? 'Aktif' : 'Nonaktif'}
+            {filtered.map((item) => {
+              const stock = item.stock ?? 99
+              const si = stockInfo(stock)
+              return (
+                <div key={item.id} className="grid grid-cols-12 px-5 py-3 hover:bg-pos-card-hover items-center">
+                  <span className="col-span-1 text-xl">{item.emoji}</span>
+                  <span className={`col-span-3 text-sm ${item.active !== false ? 'text-cream/90' : 'text-cream/30 line-through'}`}>{item.name}</span>
+                  <span className="col-span-2 text-cream/50 text-xs">{item.cat}</span>
+                  <span className="col-span-2 text-right text-gold text-sm font-medium">{fmt(item.price)}</span>
+                  <span className="col-span-1 text-center text-sm font-semibold text-cream/80">{stock}</span>
+                  <span className="col-span-1 flex justify-center">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${si.cls}`}>
+                      {si.label}
+                    </span>
                   </span>
-                </span>
-                <div className="col-span-2 flex gap-1 justify-end">
-                  <button
-                    onClick={() => setEditItem({ ...item })}
-                    className="px-2 py-1 text-xs bg-pos-bg border border-pos-border rounded text-cream/60 hover:text-gold hover:border-gold/30"
-                  >
-                    Edit
-                  </button>
-                  {item.active !== false && (
+                  <div className="col-span-2 flex gap-1 justify-end">
                     <button
-                      onClick={() => setDeactivateItem(item)}
-                      className="px-2 py-1 text-xs bg-pos-bg border border-pos-border rounded text-cream/60 hover:text-pos-red hover:border-pos-red/30"
+                      onClick={() => setEditItem({ ...item })}
+                      className="px-2 py-1 text-xs bg-pos-bg border border-pos-border rounded text-cream/60 hover:text-gold hover:border-gold/30"
                     >
-                      Off
+                      Edit
                     </button>
-                  )}
+                    {item.active !== false && (
+                      <button
+                        onClick={() => setDeactivateItem(item)}
+                        className="px-2 py-1 text-xs bg-pos-bg border border-pos-border rounded text-cream/60 hover:text-pos-red hover:border-pos-red/30"
+                      >
+                        Off
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
@@ -165,7 +165,7 @@ export default function MenuMgmtScreen() {
       {addOpen && (
         <ItemModal
           title="Tambah Menu"
-          item={{ name: '', price: '', emoji: '☕', cat: 'Coffee', active: true }}
+          item={{ name: '', price: '', emoji: '☕', cat: 'Coffee', active: true, stock: 20 }}
           onSave={handleAdd}
           onClose={() => setAddOpen(false)}
         />
@@ -207,11 +207,11 @@ export default function MenuMgmtScreen() {
 }
 
 function ItemModal({ title, item, onSave, onClose }) {
-  const [form, setForm] = useState({ ...item, price: String(item.price || '') })
+  const [form, setForm] = useState({ ...item, price: String(item.price || ''), stock: String(item.stock ?? 20) })
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSave({ ...form, price: parseInt(form.price) || 0 })
+    onSave({ ...form, price: parseInt(form.price) || 0, stock: parseInt(form.stock) || 0 })
   }
 
   return (
@@ -248,6 +248,24 @@ function ItemModal({ title, item, onSave, onClose }) {
               />
             </Field>
           </div>
+          <Field label="Jumlah Stok">
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                value={form.stock}
+                onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                className="w-full px-3 py-2 bg-pos-card border border-pos-border rounded-lg text-cream text-sm focus:outline-none focus:border-gold/50"
+              />
+              {(() => {
+                const s = parseInt(form.stock) || 0
+                const si = s <= 0 ? { label: 'Habis', cls: 'bg-pos-red/20 text-pos-red' }
+                          : s <= 5 ? { label: 'Stok Menipis', cls: 'bg-pos-orange/20 text-pos-orange' }
+                          : { label: 'Stok Aman', cls: 'bg-pos-green/20 text-pos-green' }
+                return <span className={`text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap ${si.cls}`}>{si.label}</span>
+              })()}
+            </div>
+          </Field>
           <Field label="Kategori">
             <select
               value={form.cat}

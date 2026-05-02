@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MENU_DATA, ALL_ITEMS } from '../../../data/menu'
-import { INIT_TABLES, fmt } from '../../../data/constants'
+import { INIT_TABLES, fmt, stockInfo } from '../../../data/constants'
 import { DB } from '../../../lib/db'
 
 const CATEGORIES = Object.keys(MENU_DATA)
@@ -9,6 +9,7 @@ const TAX_RATE = 0.10
 export default function CashierScreen({ user }) {
   const [cat, setCat] = useState(CATEGORIES[0])
   const [search, setSearch] = useState('')
+  const [menuItems, setMenuItems] = useState(ALL_ITEMS)
   const [orderType, setOrderType] = useState('dine_in')
   const [tableId, setTableId] = useState('')
   const [customerName, setCustomerName] = useState('')
@@ -22,7 +23,14 @@ export default function CashierScreen({ user }) {
   const [splitCount, setSplitCount] = useState(2)
   const [success, setSuccess] = useState(false)
 
-  const filtered = ALL_ITEMS.filter((item) => {
+  useEffect(() => {
+    DB.getMenuItems().then((data) => {
+      if (data && data.length > 0) setMenuItems(data)
+    })
+  }, [])
+
+  const filtered = menuItems.filter((item) => {
+    if (item.active === false) return false
     const matchCat = item.cat === cat
     const matchSearch = !search || item.name.toLowerCase().includes(search.toLowerCase())
     return matchCat && matchSearch
@@ -146,24 +154,38 @@ export default function CashierScreen({ user }) {
         <div className="flex-1 overflow-y-auto grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 content-start">
           {filtered.map((item) => {
             const qty = cartQty(item.id)
+            const stock = item.stock ?? 99
+            const habis = stock <= 0
+            const si = stockInfo(stock)
             return (
               <button
                 key={item.id}
-                onClick={() => addToCart(item)}
+                onClick={() => !habis && addToCart(item)}
+                disabled={habis}
                 className={`relative text-left p-3 rounded-xl border transition-all ${
-                  qty > 0
-                    ? 'border-gold/60 bg-gold/10'
-                    : 'border-pos-border bg-pos-card hover:bg-pos-card-hover hover:border-pos-border/80'
+                  habis
+                    ? 'border-pos-border/30 bg-pos-card/40 opacity-50 cursor-not-allowed'
+                    : qty > 0
+                      ? 'border-gold/60 bg-gold/10'
+                      : 'border-pos-border bg-pos-card hover:bg-pos-card-hover hover:border-pos-border/80'
                 }`}
               >
-                {qty > 0 && (
+                {/* Qty badge */}
+                {qty > 0 && !habis && (
                   <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-gold text-espresso text-xs font-bold flex items-center justify-center">
                     {qty}
                   </div>
                 )}
                 <div className="text-2xl mb-2">{item.emoji}</div>
-                <div className="text-cream/90 text-xs font-medium leading-snug mb-1 pr-5 line-clamp-2">{item.name}</div>
-                <div className="text-gold text-xs font-semibold">{fmt(item.price)}</div>
+                <div className="text-cream/90 text-xs font-medium leading-snug mb-1.5 pr-5 line-clamp-2">{item.name}</div>
+                <div className="flex items-center justify-between gap-1 flex-wrap">
+                  <div className="text-gold text-xs font-semibold">{fmt(item.price)}</div>
+                  {stock <= 5 && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium leading-none ${si.cls}`}>
+                      {si.label}
+                    </span>
+                  )}
+                </div>
               </button>
             )
           })}
