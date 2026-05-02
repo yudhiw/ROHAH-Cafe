@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react'
 
 const links = [
-  { label: 'About',   href: '#about'   },
-  { label: 'Menu',    href: '#menu'    },
-  { label: 'Promo',   href: '#promo'   },
-  { label: 'Gallery', href: '#gallery' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'About',   id: 'about'   },
+  { label: 'Menu',    id: 'menu'    },
+  { label: 'Promo',   id: 'promo'   },
+  { label: 'Gallery', id: 'gallery' },
+  { label: 'Contact', id: 'contact' },
 ]
+
+function scrollTo(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+}
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(() => window.scrollY > 60)
@@ -27,7 +31,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
         {/* Logo */}
-        <a href="#" className="flex items-center">
+        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center">
           <img
             src="/uploads/logo-1777600521020.png"
             alt="ROHAH Cafe"
@@ -36,18 +40,18 @@ export default function Navbar() {
               filter: 'brightness(0) sepia(1) hue-rotate(160deg) saturate(0.6) brightness(0.6)',
             }}
           />
-        </a>
+        </button>
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-8">
           {links.map((l) => (
-            <a
+            <button
               key={l.label}
-              href={l.href}
+              onClick={() => scrollTo(l.id)}
               className="text-sm font-medium tracking-wide text-espresso hover:text-gold transition-colors"
             >
               {l.label}
-            </a>
+            </button>
           ))}
           <a
             href="/#/pos"
@@ -55,12 +59,12 @@ export default function Navbar() {
           >
             POS
           </a>
-          <a
-            href="#menu"
+          <button
+            onClick={() => scrollTo('menu')}
             className="text-sm font-medium px-4 py-2 rounded bg-espresso text-cream hover:bg-brown-mid transition-colors"
           >
             Lihat Menu
-          </a>
+          </button>
         </div>
 
         {/* Mobile hamburger */}
@@ -79,14 +83,13 @@ export default function Navbar() {
       {open && (
         <div className="md:hidden bg-cream shadow-lg px-6 py-4 flex flex-col gap-4 border-t border-espresso/10">
           {links.map((l) => (
-            <a
+            <button
               key={l.label}
-              href={l.href}
-              onClick={() => setOpen(false)}
-              className="text-espresso font-medium text-sm hover:text-gold transition-colors"
+              onClick={() => { scrollTo(l.id); setOpen(false) }}
+              className="text-left text-espresso font-medium text-sm hover:text-gold transition-colors"
             >
               {l.label}
-            </a>
+            </button>
           ))}
           <a
             href="/#/pos"
@@ -95,13 +98,12 @@ export default function Navbar() {
           >
             POS System
           </a>
-          <a
-            href="#menu"
-            onClick={() => setOpen(false)}
+          <button
+            onClick={() => { scrollTo('menu'); setOpen(false) }}
             className="text-sm font-medium px-4 py-2 rounded bg-espresso text-cream text-center hover:bg-brown-mid transition-colors"
           >
             Lihat Menu
-          </a>
+          </button>
         </div>
       )}
     </nav>

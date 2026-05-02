@@ -15,23 +15,17 @@ export default function Menu() {
   useEffect(() => {
     DB.getMenuItems()
       .then((data) => {
-        if (data && data.length > 0) {
-          // Hanya tampilkan item yang aktif dan stok > 0
-          const active = data.filter((i) => i.active !== false && (i.stock == null || i.stock > 0))
-          setMenuItems(active)
-
-          // Susun urutan kategori sesuai urutan asli
-          const cats = DEFAULT_CATEGORIES.filter((c) =>
-            active.some((i) => i.cat === c)
-          )
+        const source = (data && data.length > 0) ? data : ALL_ITEMS
+        const active = source.filter((i) => i.active !== false && (i.stock == null || i.stock > 0))
+        const display = active.length > 0 ? active : source
+        setMenuItems(display)
+        const cats = DEFAULT_CATEGORIES.filter((c) => display.some((i) => i.cat === c))
+        if (cats.length > 0) {
           setCategories(cats)
           if (!cats.includes(activeTab)) setActiveTab(cats[0])
         }
       })
-      .catch(() => {
-        // Fallback ke data lokal jika Supabase tidak tersedia
-        setMenuItems(ALL_ITEMS)
-      })
+      .catch(() => setMenuItems(ALL_ITEMS))
       .finally(() => setLoading(false))
   }, [])
 
