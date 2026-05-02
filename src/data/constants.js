@@ -2,7 +2,7 @@ export const ROLES = {
   kasir:   { label: 'Kasir',   color: '#4caf7d', icon: '🏧', screens: ['cashier', 'table', 'kitchen'] },
   admin:   { label: 'Admin',   color: '#5090e0', icon: '⚙️',  screens: ['menuMgmt'] },
   manager: { label: 'Manager', color: '#e07830', icon: '📊', screens: ['cashier', 'table', 'kitchen', 'report', 'loyalty', 'menuMgmt'] },
-  owner:   { label: 'Owner',   color: '#C8963E', icon: '👑', screens: ['cashier', 'table', 'kitchen', 'report', 'loyalty', 'menuMgmt', 'settings'] },
+  owner:   { label: 'Owner',   color: '#739191', icon: '👑', screens: ['cashier', 'table', 'kitchen', 'report', 'loyalty', 'menuMgmt', 'settings'] },
 }
 
 export const NAV_ITEMS = [

@@ -4,29 +4,30 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Cafe Profile colors
-        cream: '#f5ede0',
-        'cream-dark': '#ede0cc',
-        espresso: '#1a1008',
-        'brown-mid': '#5c3d20',
-        gold: '#C8963E',
-        'gold-light': '#e0b060',
-        'warm-white': '#faf6f0',
-        // POS colors
-        'pos-bg': '#141008',
-        'pos-sidebar': '#1e1610',
-        'pos-card': '#221b10',
-        'pos-card-hover': '#2a2214',
-        'pos-border': '#3a2e1a',
-        'pos-green': '#4caf7d',
-        'pos-red': '#e05050',
-        'pos-orange': '#e07830',
-        'pos-blue': '#5090e0',
+        // ── Cafe Profile ──────────────────────────────────────────
+        cream:        '#FAF6ED',   // Putih Gading  — latar belakang utama
+        'cream-dark': '#EDE9DF',   // sedikit lebih gelap untuk section alt
+        espresso:     '#3E4140',   // Abu-abu Tua   — teks gelap & section gelap
+        'brown-mid':  '#8C6D51',   // Cokelat Kopi  — teks sekunder / aksen bingkai
+        gold:         '#739191',   // Teal Utama    — judul, label, aksen
+        'gold-light': '#9AADAD',   // Teal muda     — hover state
+        'warm-white': '#FAF6ED',   // sama dengan cream untuk kartu
+
+        // ── POS System (dark theme, aksen teal) ────────────────────
+        'pos-bg':         '#111818',
+        'pos-sidebar':    '#162020',
+        'pos-card':       '#1c2a2a',
+        'pos-card-hover': '#233232',
+        'pos-border':     '#2e4242',
+        'pos-green':      '#4caf7d',
+        'pos-red':        '#e05050',
+        'pos-orange':     '#e07830',
+        'pos-blue':       '#5090e0',
       },
       fontFamily: {
-        playfair: ['"Playfair Display"', 'serif'],
+        playfair:  ['"Playfair Display"', 'serif'],
         cormorant: ['"Cormorant Garamond"', 'serif'],
-        sans: ['"DM Sans"', 'sans-serif'],
+        sans:      ['"DM Sans"', 'sans-serif'],
       },
     },
   },

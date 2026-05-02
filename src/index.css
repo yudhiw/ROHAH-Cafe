@@ -9,7 +9,7 @@ html { scroll-behavior: smooth; }
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #C8963E44; border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: #73919144; border-radius: 2px; }
 
 .reveal {
   opacity: 0;
