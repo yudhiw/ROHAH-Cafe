@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react'
 
 const links = [
-  { label: 'About', href: '#about' },
-  { label: 'Menu', href: '#menu' },
-  { label: 'Promo', href: '#promo' },
+  { label: 'About',   href: '#about'   },
+  { label: 'Menu',    href: '#menu'    },
+  { label: 'Promo',   href: '#promo'   },
   { label: 'Gallery', href: '#gallery' },
   { label: 'Contact', href: '#contact' },
 ]
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
+  const [scrolled, setScrolled] = useState(() => window.scrollY > 60)
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -18,22 +18,23 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const navBg = scrolled
-    ? 'bg-cream/92 backdrop-blur-md shadow-sm'
-    : 'bg-transparent'
-
-  const linkColor = scrolled ? 'text-espresso' : 'text-cream'
-  const logoFilter = scrolled ? '' : 'brightness-0 invert'
-
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled
+        ? 'bg-cream/95 backdrop-blur-md shadow-sm'
+        : 'bg-cream/80 backdrop-blur-sm'
+    }`}>
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+
         {/* Logo */}
         <a href="#" className="flex items-center">
           <img
             src="/uploads/logo-1777600521020.png"
             alt="ROHAH Cafe"
-            style={{ height: 44, filter: scrolled ? 'brightness(0) sepia(1) hue-rotate(10deg) saturate(0.5)' : 'brightness(0) invert(1)' }}
+            style={{
+              height: 44,
+              filter: 'brightness(0) sepia(1) hue-rotate(160deg) saturate(0.6) brightness(0.6)',
+            }}
           />
         </a>
 
@@ -43,14 +44,14 @@ export default function Navbar() {
             <a
               key={l.label}
               href={l.href}
-              className={`text-sm font-medium tracking-wide transition-colors hover:text-gold ${linkColor}`}
+              className="text-sm font-medium tracking-wide text-espresso hover:text-gold transition-colors"
             >
               {l.label}
             </a>
           ))}
           <a
             href="/#/pos"
-            className={`text-sm font-medium px-3 py-1.5 rounded border transition-colors hover:bg-gold hover:text-espresso hover:border-gold ${scrolled ? 'border-gold text-gold' : 'border-gold/70 text-gold'}`}
+            className="text-sm font-medium px-3 py-1.5 rounded border border-gold text-gold hover:bg-gold hover:text-cream transition-colors"
           >
             POS
           </a>
@@ -65,7 +66,7 @@ export default function Navbar() {
         {/* Mobile hamburger */}
         <button
           onClick={() => setOpen(!open)}
-          className={`md:hidden flex flex-col gap-1.5 p-2 ${linkColor}`}
+          className="md:hidden flex flex-col gap-1.5 p-2 text-espresso"
           aria-label="Toggle menu"
         >
           <span className={`block w-6 h-0.5 bg-current transition-all duration-300 ${open ? 'rotate-45 translate-y-2' : ''}`} />
@@ -76,7 +77,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden bg-cream shadow-lg px-6 py-4 flex flex-col gap-4">
+        <div className="md:hidden bg-cream shadow-lg px-6 py-4 flex flex-col gap-4 border-t border-espresso/10">
           {links.map((l) => (
             <a
               key={l.label}
@@ -90,14 +91,14 @@ export default function Navbar() {
           <a
             href="/#/pos"
             onClick={() => setOpen(false)}
-            className="text-gold border border-gold text-sm font-medium px-3 py-1.5 rounded text-center"
+            className="text-gold border border-gold text-sm font-medium px-3 py-1.5 rounded text-center hover:bg-gold hover:text-cream transition-colors"
           >
             POS System
           </a>
           <a
             href="#menu"
             onClick={() => setOpen(false)}
-            className="text-sm font-medium px-4 py-2 rounded bg-espresso text-cream text-center"
+            className="text-sm font-medium px-4 py-2 rounded bg-espresso text-cream text-center hover:bg-brown-mid transition-colors"
           >
             Lihat Menu
           </a>
