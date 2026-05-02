@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROHAH POS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-config.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { height: 100%; width: 100%; overflow: hidden; }
+  body { font-family: 'DM Sans', sans-serif; background: #141008; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #C8963E44; border-radius: 2px; }
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+// ── INIT SUPABASE ──────────────────────────────────────────────────────────
+if (window.initSupabase) window.initSupabase();
+const POS_DB = window.ROHAH_DB;
+
+// ── COLORS ─────────────────────────────────────────────────────────────────
+const C = {
+  bg:"#141008", sidebar:"#1e1610", card:"#221b10", cardHover:"#2a2214",
+  border:"#3a2e1a", gold:"#C8963E", goldLight:"#e0b060",
+  cream:"#f5ede0", creamDim:"#b09070",
+  green:"#4caf7d", red:"#e05050", orange:"#e07830", blue:"#5090e0",
+  purple:"#9070e0",
+};
+
+// ── ROLES CONFIG ────────────────────────────────────────────────────────────
+const ROLES = {
+  kasir:   { label:"Kasir",   color:C.green,  icon:"🏧", screens:["cashier","table","kitchen"] },
+  admin:   { label:"Admin",   color:C.blue,   icon:"⚙️", screens:["menuMgmt"] },
+  manager: { label:"Manager", color:C.orange, icon:"📊", screens:["cashier","table","kitchen","report","loyalty","menuMgmt"] },
+  owner:   { label:"Owner",   color:C.gold,   icon:"👑", screens:["cashier","table","kitchen","report","loyalty","menuMgmt","settings"] },
+};
+
+// ── MENU DATA ───────────────────────────────────────────────────────────────
+const MENU_DATA = {
+  "Main Dish": [
+    {id:1,  name:"Mie Yamin Tasik Manis",     price:35000, emoji:"🍜"},
+    {id:2,  name:"Mie Yamin Tasik Asin",      price:35000, emoji:"🍜"},
+    {id:3,  name:"Mie Ayam Kampung",           price:30000, emoji:"🍜"},
+    {id:4,  name:"Nasi Sop Buntut",            price:65000, emoji:"🍲"},
+    {id:5,  name:"Nasi Sop Iga",               price:65000, emoji:"🍲"},
+    {id:6,  name:"Nasi Ayam Bakar",            price:45000, emoji:"🍗"},
+    {id:7,  name:"Nasi Ayam Goreng",           price:45000, emoji:"🍗"},
+    {id:8,  name:"Rice Bowl Se'i Sapi",        price:40000, emoji:"🥩"},
+    {id:9,  name:"Rice Bowl Chicken Teriyaki", price:35000, emoji:"🍱"},
+    {id:10, name:"Chicken Steak",              price:65000, emoji:"🥩"},
+    {id:11, name:"Kwetiaw Goreng",             price:37000, emoji:"🍝"},
+    {id:12, name:"Nasi Goreng Special",        price:37000, emoji:"🍳"},
+    {id:13, name:"Bubur Ayam",                 price:25000, emoji:"🥣"},
+    {id:14, name:"Tekwan",                     price:30000, emoji:"🍵"},
+    {id:15, name:"Pangsit Kuah",               price:25000, emoji:"🥟"},
+  ],
+  "Side Dish": [
+    {id:16, name:"Asinan Betawi",         price:30000, emoji:"🥗"},
+    {id:17, name:"Asinan Buah",           price:30000, emoji:"🍇"},
+    {id:18, name:"Pempek (7 pcs)",        price:45000, emoji:"🐟"},
+    {id:19, name:"Singkong Keju Manis",   price:27500, emoji:"🧀"},
+    {id:20, name:"Singkong Keju Asin",    price:27500, emoji:"🧀"},
+    {id:21, name:"French Fries",          price:20000, emoji:"🍟"},
+    {id:22, name:"Dimsum Ayam (4 pcs)",   price:25000, emoji:"🥟"},
+    {id:23, name:"Dimsum Mix (6 pcs)",    price:40000, emoji:"🥟"},
+    {id:24, name:"Cilok Goreng",          price:18000, emoji:"🟠"},
+    {id:25, name:"Croissant",             price:27000, emoji:"🥐"},
+    {id:26, name:"Cireng",                price:18000, emoji:"🟡"},
+  ],
+  "Coffee": [
+    {id:27, name:"Americano Hot/Ice",      price:25000, emoji:"☕"},
+    {id:28, name:"Rohah Signature",        price:25000, emoji:"☕"},
+    {id:29, name:"Long Black",             price:25000, emoji:"☕"},
+    {id:30, name:"Cappuccino",             price:25000, emoji:"☕"},
+    {id:31, name:"Hazelnut Latte",         price:25000, emoji:"☕"},
+    {id:32, name:"Pandan Latte",           price:25000, emoji:"☕"},
+    {id:33, name:"Butterscotch Original",  price:25000, emoji:"☕"},
+    {id:34, name:"Butterscotch Sea Salt",  price:25000, emoji:"☕"},
+    {id:35, name:"Gula Aren Original",     price:25000, emoji:"☕"},
+    {id:36, name:"Gula Aren Klepon Latte", price:25000, emoji:"☕"},
+    {id:37, name:"Caramel Latte",          price:25000, emoji:"☕"},
+    {id:38, name:"Latte",                  price:25000, emoji:"🥛"},
+    {id:39, name:"Frappe de Tiramisu",     price:30000, emoji:"🧊"},
+    {id:40, name:"Nutty Caramel Latte",    price:30000, emoji:"☕"},
+    {id:41, name:"Nutella Latte",          price:25000, emoji:"☕"},
+  ],
+  "Non-Coffee": [
+    {id:42, name:"Dark Chocolate",  price:25000, emoji:"🍫"},
+    {id:43, name:"Klepon",          price:25000, emoji:"🟢"},
+    {id:44, name:"Red Velvet",      price:25000, emoji:"❤️"},
+    {id:45, name:"Thai Tea",        price:25000, emoji:"🧡"},
+    {id:46, name:"Taro Original",   price:25000, emoji:"🟣"},
+    {id:47, name:"Taro Sea Salt",   price:25000, emoji:"🟣"},
+    {id:48, name:"Matcha Latte",    price:25000, emoji:"🍵"},
+    {id:49, name:"Matcha Sea Salt", price:25000, emoji:"🍵"},
+    {id:50, name:"Snow Ice",        price:35000, emoji:"🧊"},
+  ],
+  "Tea": [
+    {id:51, name:"Lemon Tea",                  price:18000, emoji:"🍋"},
+    {id:52, name:"Lychee Tea",                 price:18000, emoji:"🍇"},
+    {id:53, name:"Lemon Lychee Tea",           price:25000, emoji:"🍋"},
+    {id:54, name:"Teh Dilmah Peppermint",      price:25000, emoji:"🫖"},
+    {id:55, name:"Teh Dilmah Ginger & Mint",   price:25000, emoji:"🫖"},
+    {id:56, name:"Teh Dilmah Vanilla",         price:25000, emoji:"🫖"},
+    {id:57, name:"Teh Dilmah Earl Grey",       price:25000, emoji:"🫖"},
+    {id:58, name:"Teh Dilmah Chamomile",       price:25000, emoji:"🌼"},
+    {id:59, name:"Teh Dilmah Green Tea",       price:25000, emoji:"🍵"},
+    {id:60, name:"Teh Dilmah Coconut & Mango", price:25000, emoji:"🥥"},
+    {id:61, name:"Artisan Tea Chamomile",      price:25000, emoji:"🌼"},
+    {id:62, name:"Artisan Tea Coffee Gayo",    price:25000, emoji:"☕"},
+    {id:63, name:"Artisan Tea Green Tea",      price:25000, emoji:"🍵"},
+    {id:64, name:"Artisan Tea Rose Flower",    price:25000, emoji:"🌺"},
+  ],
+  "Toppings": [
+    {id:65, name:"Kerupuk Putih",      price:4500, emoji:"🍘"},
+    {id:66, name:"Nasi Putih",         price:7000, emoji:"🍚"},
+    {id:67, name:"Telur Ceplok/Rebus", price:5000, emoji:"🥚"},
+  ],
+};
+const ALL_ITEMS = Object.entries(MENU_DATA).flatMap(([cat, items]) => items.map(i => ({...i, cat})));
+
+const fmt = n => "Rp " + n.toLocaleString("id-ID");
+
+// ── TABLES ──────────────────────────────────────────────────────────────────
+const INIT_TABLES = Array.from({length:12}, (_,i) => ({
+  id:i+1, label:`T${i+1}`,
+  status:["available","occupied","reserved","occupied","available","occupied","available","available","reserved","occupied","available","occupied"][i],
+  pax:[0,2,0,4,0,3,0,0,0,2,0,5][i],
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// LOGIN SCREEN
+// ══════════════════════════════════════════════════════════════════════════
+function LoginScreen({ onLogin }) {
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  const roleList = ["kasir","admin","manager","owner"];
+
+  const handleNum = (n) => {
+    if (pin.length >= 6) return;
+    setPin(p => p + n);
+    setError("");
+  };
+  const handleBack = () => setPin(p => p.slice(0,-1));
+  const handleClear = () => setPin("");
+
+  const handleLogin = async () => {
+    if (!selectedRole || pin.length < 4) return;
+    setLoading(true);
+    try {
+      const user = await POS_DB.verifyPin(selectedRole, pin);
+      if (user) {
+        onLogin(user);
+      } else {
+        setError("PIN salah. Coba lagi.");
+        setShake(true);
+        setPin("");
+        setTimeout(() => setShake(false), 600);
+      }
+    } catch(e) {
+      setError("Koneksi error. Coba lagi.");
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { if (pin.length >= 4 && selectedRole) handleLogin(); }, [pin]);
+
+  const dots = Array.from({length:6}, (_,i) => i < pin.length);
+
+  return (
+    <div style={{height:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:"32px", position:"relative", overflow:"hidden"}}>
+      {/* BG decoration */}
+      <div style={{position:"absolute", inset:0, backgroundImage:`radial-gradient(circle at 20% 50%, ${C.gold}08 0%, transparent 50%), radial-gradient(circle at 80% 50%, ${C.brown}05 0%, transparent 50%)`, pointerEvents:"none"}}></div>
+
+      {/* Logo */}
+      <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:"12px"}}>
+        <img src="uploads/logo-1777600521020.png" alt="ROHAH" style={{height:"60px", filter:"brightness(0) sepia(1) hue-rotate(10deg) saturate(0.7) brightness(1.1)"}}/>
+        <div style={{fontSize:"0.72rem", letterSpacing:"0.22em", textTransform:"uppercase", color:C.creamDim}}>Point of Sale System</div>
+        <div style={{fontSize:"0.65rem", color: window.USE_SUPABASE ? C.green : C.orange, background: window.USE_SUPABASE ? `${C.green}18` : `${C.orange}18`, padding:"3px 10px", borderRadius:"10px", letterSpacing:"0.1em"}}>
+          {window.USE_SUPABASE ? "● Supabase Connected" : "● Demo Mode (localStorage)"}
+        </div>
+      </div>
+
+      {/* Role Selector */}
+      <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:"12px"}}>
+        <div style={{fontSize:"0.72rem", color:C.creamDim, letterSpacing:"0.14em", textTransform:"uppercase"}}>Pilih Role</div>
+        <div style={{display:"flex", gap:"10px"}}>
+          {roleList.map(r => {
+            const ro = ROLES[r];
+            const active = selectedRole === r;
+            return (
+              <button key={r} onClick={() => { setSelectedRole(r); setPin(""); setError(""); }} style={{
+                width:"90px", height:"90px", borderRadius:"14px", border:`2px solid ${active ? ro.color : C.border}`,
+                background: active ? `${ro.color}18` : C.card, cursor:"pointer",
+                display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"8px",
+                transition:"all 0.2s", transform: active ? "scale(1.06)" : "scale(1)",
+              }}>
+                <div style={{fontSize:"1.8rem"}}>{ro.icon}</div>
+                <div style={{fontSize:"0.72rem", fontWeight:600, color: active ? ro.color : C.creamDim, fontFamily:"DM Sans"}}>{ro.label}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* PIN Pad */}
+      {selectedRole && (
+        <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:"16px", animation: shake ? "shake 0.4s" : "none"}}>
+          <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}`}</style>
+
+          {/* PIN Dots */}
+          <div style={{display:"flex", gap:"12px", height:"20px", alignItems:"center"}}>
+            {dots.map((filled, i) => (
+              <div key={i} style={{width:"12px", height:"12px", borderRadius:"50%", background: filled ? ROLES[selectedRole].color : "transparent", border:`2px solid ${filled ? ROLES[selectedRole].color : C.border}`, transition:"all 0.15s"}}></div>
+            ))}
+          </div>
+
+          {error && <div style={{fontSize:"0.78rem", color:C.red, textAlign:"center"}}>{error}</div>}
+
+          {/* Numpad */}
+          <div style={{display:"grid", gridTemplateColumns:"repeat(3,72px)", gridTemplateRows:"repeat(4,60px)", gap:"8px"}}>
+            {[1,2,3,4,5,6,7,8,9,"←","0","✓"].map(k => {
+              const isEnter = k === "✓";
+              const isBack = k === "←";
+              return (
+                <button key={k}
+                  onClick={() => { if(isBack) handleBack(); else if(isEnter) handleLogin(); else handleNum(String(k)); }}
+                  style={{
+                    borderRadius:"10px", border:"none", cursor:"pointer", fontFamily:"DM Sans",
+                    fontSize: isBack||isEnter ? "1.2rem" : "1.3rem", fontWeight:600,
+                    background: isEnter ? ROLES[selectedRole].color : isBack ? `${C.red}22` : C.card,
+                    color: isEnter ? C.bg : isBack ? C.red : C.cream,
+                    border: `1px solid ${isEnter ? ROLES[selectedRole].color : isBack ? `${C.red}44` : C.border}`,
+                    transition:"0.1s", display:"flex", alignItems:"center", justifyContent:"center",
+                  }}>
+                  {loading && isEnter ? "..." : k}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{fontSize:"0.68rem", color:C.creamDim, opacity:0.6}}>
+            Demo PIN: Kasir 1111 · Admin 2222 · Manager 3333 · Owner 0000
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// CASHIER SCREEN
+// ══════════════════════════════════════════════════════════════════════════
+function CashierScreen({ user }) {
+  const [activeCat, setActiveCat] = useState("Main Dish");
+  const [cart, setCart] = useState([]);
+  const [search, setSearch] = useState("");
+  const [discount, setDiscount] = useState(0);
+  const [discountType, setDiscountType] = useState("pct");
+  const [customerName, setCustomerName] = useState("");
+  const [orderType, setOrderType] = useState("Dine In");
+  const [tableNo, setTableNo] = useState("T1");
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [showSplit, setShowSplit] = useState(false);
+  const [splitCount, setSplitCount] = useState(2);
+  const [paidAmount, setPaidAmount] = useState("");
+  const [payMethod, setPayMethod] = useState("Cash");
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const cats = Object.keys(MENU_DATA);
+  const filteredItems = search ? ALL_ITEMS.filter(i => i.name.toLowerCase().includes(search.toLowerCase())) : MENU_DATA[activeCat];
+
+  const addItem = (item) => setCart(prev => {
+    const ex = prev.find(c => c.id === item.id);
+    return ex ? prev.map(c => c.id===item.id ? {...c,qty:c.qty+1} : c) : [...prev, {...item, qty:1}];
+  });
+  const removeItem = (id) => setCart(prev => prev.filter(c => c.id !== id));
+  const changeQty = (id, d) => setCart(prev => prev.map(c => c.id===id ? {...c,qty:Math.max(0,c.qty+d)} : c).filter(c=>c.qty>0));
+
+  const subtotal = cart.reduce((s,c) => s + c.price*c.qty, 0);
+  const tax = Math.round(subtotal * 0.1);
+  const discAmt = discountType==="pct" ? Math.round(subtotal*discount/100) : Math.min(discount, subtotal);
+  const total = subtotal + tax - discAmt;
+  const change = (parseInt(paidAmount)||0) - total;
+
+  const handlePay = async () => {
+    if (payMethod==="Cash" && change < 0) return;
+    const orderNo = "ORD-" + Date.now().toString().slice(-6);
+    const txn = { order_no:orderNo, cashier_id:user.id, customer_name:customerName, table_no:tableNo, order_type:orderType, subtotal, tax, discount:discAmt, total, pay_method:payMethod, status:"paid" };
+    const items = cart.map(c => ({ menu_item_id:c.id, name:c.name, price:c.price, qty:c.qty }));
+    await POS_DB.saveTransaction(txn, items);
+    setShowPayModal(false);
+    setShowSuccess(true);
+    setTimeout(() => { setShowSuccess(false); setCart([]); setDiscount(0); setPaidAmount(""); setCustomerName(""); }, 2200);
+  };
+
+  const numpadPress = (v) => {
+    if (v==="⌫") setPaidAmount(p=>p.slice(0,-1));
+    else if (v==="C") setPaidAmount("");
+    else setPaidAmount(p=>(p+v).replace(/^0+/,'')||"0");
+  };
+
+  return (
+    <div style={{display:"flex", height:"100%", gap:"1px", background:C.border}}>
+      {/* LEFT — MENU */}
+      <div style={{flex:1, display:"flex", flexDirection:"column", background:C.bg, overflow:"hidden"}}>
+        <div style={{padding:"12px 16px 0", display:"flex", gap:"8px", alignItems:"center"}}>
+          <div style={{flex:1, display:"flex", alignItems:"center", gap:"8px", background:C.card, border:`1px solid ${C.border}`, borderRadius:"6px", padding:"8px 12px"}}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.creamDim} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari menu..." style={{background:"none",border:"none",outline:"none",color:C.cream,fontSize:"0.85rem",width:"100%",fontFamily:"DM Sans"}}/>
+          </div>
+          <div style={{display:"flex", gap:"4px"}}>
+            {["Dine In","Take Away"].map(t=>(
+              <button key={t} onClick={()=>setOrderType(t)} style={{padding:"8px 12px",borderRadius:"6px",border:"none",cursor:"pointer",fontSize:"0.75rem",fontWeight:500,background:orderType===t?C.gold:C.card,color:orderType===t?C.bg:C.creamDim,fontFamily:"DM Sans",transition:"0.15s"}}>
+                {t}
+              </button>
+            ))}
+          </div>
+          {orderType==="Dine In" && (
+            <select value={tableNo} onChange={e=>setTableNo(e.target.value)} style={{background:C.card,border:`1px solid ${C.border}`,color:C.cream,padding:"8px 10px",borderRadius:"6px",fontSize:"0.8rem",fontFamily:"DM Sans",outline:"none"}}>
+              {INIT_TABLES.map(t=><option key={t.id} value={t.label}>{t.label}</option>)}
+            </select>
+          )}
+        </div>
+        {!search && (
+          <div style={{display:"flex", gap:"4px", padding:"10px 16px", overflowX:"auto", flexShrink:0}}>
+            {cats.map(c=>(
+              <button key={c} onClick={()=>setActiveCat(c)} style={{padding:"6px 14px",borderRadius:"20px",border:"none",cursor:"pointer",whiteSpace:"nowrap",fontSize:"0.76rem",fontWeight:500,background:activeCat===c?C.gold:C.card,color:activeCat===c?C.bg:C.creamDim,fontFamily:"DM Sans",transition:"0.15s",flexShrink:0}}>
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
+        <div style={{flex:1,overflowY:"auto",padding:"0 16px 16px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:"8px",alignContent:"start",marginTop:"4px"}}>
+          {filteredItems.map(item=>{
+            const inCart = cart.find(c=>c.id===item.id);
+            return (
+              <button key={item.id} onClick={()=>addItem(item)} style={{background:inCart?`${C.gold}22`:C.card,border:inCart?`1px solid ${C.gold}66`:`1px solid ${C.border}`,borderRadius:"10px",padding:"12px 10px",cursor:"pointer",textAlign:"left",transition:"0.15s",position:"relative"}}>
+                <div style={{fontSize:"1.6rem",marginBottom:"6px"}}>{item.emoji}</div>
+                <div style={{fontSize:"0.76rem",fontWeight:500,color:C.cream,lineHeight:1.3,marginBottom:"5px"}}>{item.name}</div>
+                <div style={{fontSize:"0.8rem",color:C.gold,fontWeight:600}}>{fmt(item.price)}</div>
+                {inCart && <div style={{position:"absolute",top:"8px",right:"8px",background:C.gold,color:C.bg,borderRadius:"10px",fontSize:"0.65rem",fontWeight:700,padding:"1px 6px"}}>{inCart.qty}</div>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* RIGHT — BILL */}
+      <div style={{width:"310px",background:C.sidebar,display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div style={{padding:"12px 16px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div>
+            <div style={{fontSize:"0.88rem",fontWeight:600,color:C.cream}}>Order Baru</div>
+            <div style={{fontSize:"0.7rem",color:C.creamDim,marginTop:"2px"}}>{orderType} · {tableNo} · {user.name}</div>
+          </div>
+          <div style={{display:"flex",gap:"6px"}}>
+            <button onClick={()=>setCart([])} style={{background:"none",border:`1px solid ${C.border}`,borderRadius:"6px",padding:"5px 10px",cursor:"pointer",fontSize:"0.7rem",color:C.creamDim,fontFamily:"DM Sans"}}>Bersihkan</button>
+            <button onClick={()=>setShowSplit(true)} style={{background:"none",border:`1px solid ${C.border}`,borderRadius:"6px",padding:"5px 8px",cursor:"pointer",color:C.creamDim}} title="Split Bill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l5.1 5.1M4 4l5 5"/></svg>
+            </button>
+          </div>
+        </div>
+        <div style={{padding:"8px 16px",borderBottom:`1px solid ${C.border}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:"8px",background:C.card,border:`1px solid ${C.border}`,borderRadius:"6px",padding:"6px 10px"}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.creamDim} strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input value={customerName} onChange={e=>setCustomerName(e.target.value)} placeholder="Nama pelanggan (opsional)" style={{background:"none",border:"none",outline:"none",color:C.cream,fontSize:"0.78rem",width:"100%",fontFamily:"DM Sans"}}/>
+          </div>
+        </div>
+        <div style={{flex:1,overflowY:"auto",padding:"8px 16px"}}>
+          {cart.length===0 ? (
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:"10px",opacity:0.4}}>
+              <div style={{fontSize:"2rem"}}>🛒</div>
+              <div style={{fontSize:"0.78rem",color:C.creamDim}}>Belum ada item</div>
+            </div>
+          ) : cart.map(item=>(
+            <div key={item.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"9px 0",borderBottom:`1px solid ${C.border}22`}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:"0.8rem",fontWeight:500,color:C.cream}}>{item.name}</div>
+                <div style={{fontSize:"0.73rem",color:C.gold,marginTop:"2px"}}>{fmt(item.price)}</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
+                <button onClick={()=>changeQty(item.id,-1)} style={{width:"22px",height:"22px",borderRadius:"4px",border:`1px solid ${C.border}`,background:C.card,color:C.cream,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.9rem"}}>−</button>
+                <span style={{fontSize:"0.82rem",color:C.cream,minWidth:"16px",textAlign:"center"}}>{item.qty}</span>
+                <button onClick={()=>changeQty(item.id,1)} style={{width:"22px",height:"22px",borderRadius:"4px",border:"none",background:C.gold,color:C.bg,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.9rem"}}>+</button>
+                <button onClick={()=>removeItem(item.id)} style={{width:"22px",height:"22px",borderRadius:"4px",border:"none",background:"none",color:C.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Discount */}
+        <div style={{padding:"8px 16px",borderTop:`1px solid ${C.border}`}}>
+          <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
+            <div style={{fontSize:"0.73rem",color:C.creamDim,minWidth:"52px"}}>Diskon</div>
+            <div style={{display:"flex",gap:"4px"}}>
+              {[["pct","%"],["flat","Rp"]].map(([k,l])=>(
+                <button key={k} onClick={()=>setDiscountType(k)} style={{padding:"3px 7px",borderRadius:"4px",border:"none",cursor:"pointer",fontSize:"0.7rem",background:discountType===k?C.gold:C.card,color:discountType===k?C.bg:C.creamDim,fontFamily:"DM Sans"}}>{l}</button>
+              ))}
+            </div>
+            <input type="number" value={discount||""} onChange={e=>setDiscount(Number(e.target.value))} placeholder="0" style={{flex:1,background:C.card,border:`1px solid ${C.border}`,borderRadius:"4px",padding:"4px 8px",color:C.cream,fontSize:"0.8rem",outline:"none",fontFamily:"DM Sans",textAlign:"right"}}/>
+          </div>
+        </div>
+
+        {/* Summary */}
+        <div style={{padding:"10px 16px",borderTop:`1px solid ${C.border}`,display:"flex",flexDirection:"column",gap:"5px"}}>
+          {[["Subtotal",fmt(subtotal)],["PPN 10%",fmt(tax)],discAmt>0&&["Diskon",`- ${fmt(discAmt)}`]].filter(Boolean).map(([l,v])=>(
+            <div key={l} style={{display:"flex",justifyContent:"space-between",fontSize:"0.76rem",color:C.creamDim}}>
+              <span>{l}</span><span style={{color:l==="Diskon"?C.green:undefined}}>{v}</span>
+            </div>
+          ))}
+          <div style={{display:"flex",justifyContent:"space-between",marginTop:"4px",paddingTop:"8px",borderTop:`1px solid ${C.border}`}}>
+            <span style={{fontWeight:600,color:C.cream}}>TOTAL</span>
+            <span style={{fontWeight:700,fontSize:"1.05rem",color:C.gold}}>{fmt(total)}</span>
+          </div>
+        </div>
+
+        <div style={{padding:"0 16px 14px"}}>
+          <button onClick={()=>cart.length>0&&setShowPayModal(true)} style={{width:"100%",padding:"13px",background:cart.length>0?C.gold:"#3a2e1a",color:cart.length>0?C.bg:C.creamDim,border:"none",borderRadius:"10px",fontFamily:"DM Sans",fontSize:"0.9rem",fontWeight:700,cursor:cart.length>0?"pointer":"default",transition:"0.15s",letterSpacing:"0.04em"}}>
+            💳 Bayar {cart.length>0?fmt(total):""}
+          </button>
+        </div>
+      </div>
+
+      {/* PAY MODAL */}
+      {showPayModal && (
+        <div style={{position:"fixed",inset:0,background:"#00000088",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}} onClick={()=>setShowPayModal(false)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.sidebar,border:`1px solid ${C.border}`,borderRadius:"16px",padding:"24px",width:"400px",display:"flex",flexDirection:"column",gap:"14px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontSize:"1rem",fontWeight:600,color:C.cream}}>Pembayaran</div>
+              <button onClick={()=>setShowPayModal(false)} style={{background:"none",border:"none",color:C.creamDim,cursor:"pointer",fontSize:"1.2rem"}}>×</button>
+            </div>
+            <div style={{display:"flex",gap:"6px"}}>
+              {["Cash","QRIS","Debit","Transfer"].map(m=>(
+                <button key={m} onClick={()=>setPayMethod(m)} style={{flex:1,padding:"9px 4px",borderRadius:"8px",border:payMethod===m?`1px solid ${C.gold}`:`1px solid ${C.border}`,background:payMethod===m?`${C.gold}22`:C.card,color:payMethod===m?C.gold:C.creamDim,fontSize:"0.74rem",fontWeight:500,cursor:"pointer",fontFamily:"DM Sans",transition:"0.15s"}}>
+                  {m==="Cash"?"💵":m==="QRIS"?"📱":m==="Debit"?"💳":"🏦"} {m}
+                </button>
+              ))}
+            </div>
+            <div style={{background:C.card,borderRadius:"10px",padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{color:C.creamDim,fontSize:"0.86rem"}}>Total Tagihan</span>
+              <span style={{color:C.gold,fontWeight:700,fontSize:"1.15rem"}}>{fmt(total)}</span>
+            </div>
+            {payMethod==="Cash" && (
+              <>
+                <div style={{background:C.card,borderRadius:"10px",padding:"12px 16px"}}>
+                  <div style={{color:C.creamDim,fontSize:"0.73rem",marginBottom:"6px"}}>Uang Diterima</div>
+                  <div style={{fontSize:"1.5rem",fontWeight:600,color:C.cream,textAlign:"right",minHeight:"32px"}}>{paidAmount?fmt(parseInt(paidAmount)):"—"}</div>
+                </div>
+                <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                  {[50000,100000,150000,200000].map(p=>(
+                    <button key={p} onClick={()=>setPaidAmount(String(p))} style={{flex:"0 0 calc(50% - 3px)",padding:"7px",borderRadius:"6px",border:`1px solid ${C.border}`,background:C.card,color:C.cream,fontSize:"0.78rem",cursor:"pointer",fontFamily:"DM Sans"}}>{fmt(p)}</button>
+                  ))}
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"5px"}}>
+                  {[7,8,9,4,5,6,1,2,3,"⌫","0","C"].map(k=>(
+                    <button key={k} onClick={()=>numpadPress(String(k))} style={{padding:"11px",borderRadius:"7px",border:`1px solid ${C.border}`,background:k==="C"?`${C.red}22`:C.card,color:k==="C"?C.red:k==="⌫"?C.creamDim:C.cream,fontSize:"0.95rem",fontWeight:500,cursor:"pointer",fontFamily:"DM Sans"}}>{k}</button>
+                  ))}
+                </div>
+                {paidAmount && (
+                  <div style={{display:"flex",justifyContent:"space-between",padding:"7px 12px",background:`${change>=0?C.green:C.red}22`,borderRadius:"8px"}}>
+                    <span style={{fontSize:"0.86rem",color:C.creamDim}}>Kembalian</span>
+                    <span style={{fontWeight:600,color:change>=0?C.green:C.red}}>{change>=0?fmt(change):`Kurang ${fmt(-change)}`}</span>
+                  </div>
+                )}
+              </>
+            )}
+            {payMethod!=="Cash" && (
+              <div style={{background:C.card,borderRadius:"10px",padding:"24px",display:"flex",flexDirection:"column",alignItems:"center",gap:"10px"}}>
+                <div style={{fontSize:"2.5rem"}}>{payMethod==="QRIS"?"📱":payMethod==="Debit"?"💳":"🏦"}</div>
+                <div style={{fontSize:"0.82rem",color:C.creamDim,textAlign:"center"}}>{payMethod==="QRIS"?"Scan QR Code di mesin kasir":payMethod==="Debit"?"Masukkan kartu ke mesin EDC":"Transfer ke rekening ROHAH Cafe"}</div>
+              </div>
+            )}
+            <button onClick={handlePay} disabled={payMethod==="Cash"&&change<0} style={{padding:"13px",background:(payMethod!=="Cash"||change>=0)?C.gold:C.border,color:(payMethod!=="Cash"||change>=0)?C.bg:C.creamDim,border:"none",borderRadius:"10px",fontFamily:"DM Sans",fontSize:"0.9rem",fontWeight:700,cursor:(payMethod!=="Cash"||change>=0)?"pointer":"default",transition:"0.15s"}}>
+              ✓ Konfirmasi Pembayaran
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SPLIT MODAL */}
+      {showSplit && (
+        <div style={{position:"fixed",inset:0,background:"#00000088",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}} onClick={()=>setShowSplit(false)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.sidebar,border:`1px solid ${C.border}`,borderRadius:"16px",padding:"24px",width:"320px",display:"flex",flexDirection:"column",gap:"14px"}}>
+            <div style={{fontWeight:600,color:C.cream}}>Split Bill</div>
+            <div style={{fontSize:"0.83rem",color:C.creamDim}}>Bagi tagihan untuk berapa orang?</div>
+            <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+              <button onClick={()=>setSplitCount(Math.max(2,splitCount-1))} style={{width:"36px",height:"36px",borderRadius:"8px",border:`1px solid ${C.border}`,background:C.card,color:C.cream,cursor:"pointer",fontSize:"1.2rem",fontFamily:"DM Sans"}}>−</button>
+              <span style={{flex:1,textAlign:"center",fontSize:"2rem",fontWeight:700,color:C.gold}}>{splitCount}</span>
+              <button onClick={()=>setSplitCount(splitCount+1)} style={{width:"36px",height:"36px",borderRadius:"8px",border:"none",background:C.gold,color:C.bg,cursor:"pointer",fontSize:"1.2rem",fontFamily:"DM Sans"}}>+</button>
+            </div>
+            <div style={{background:C.card,borderRadius:"8px",padding:"10px 14px",display:"flex",justifyContent:"space-between"}}>
+              <span style={{color:C.creamDim,fontSize:"0.83rem"}}>Per orang</span>
+              <span style={{color:C.gold,fontWeight:700}}>{fmt(Math.ceil(total/splitCount))}</span>
+            </div>
+            <button onClick={()=>setShowSplit(false)} style={{padding:"11px",background:C.gold,color:C.bg,border:"none",borderRadius:"8px",fontFamily:"DM Sans",fontSize:"0.86rem",fontWeight:600,cursor:"pointer"}}>OK</button>
+          </div>
+        </div>
+      )}
+
+      {showSuccess && (
+        <div style={{position:"fixed",inset:0,background:"#00000099",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300}}>
+          <div style={{background:C.sidebar,borderRadius:"20px",padding:"40px 50px",display:"flex",flexDirection:"column",alignItems:"center",gap:"14px",border:`1px solid ${C.gold}66`}}>
+            <div style={{fontSize:"3rem"}}>✅</div>
+            <div style={{fontSize:"1.05rem",fontWeight:700,color:C.cream}}>Pembayaran Berhasil!</div>
+            <div style={{fontSize:"0.83rem",color:C.creamDim}}>Terima kasih, {customerName||"Pelanggan"}!</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// TABLE SCREEN
+// ══════════════════════════════════════════════════════════════════════════
+function TableScreen() {
+  const [tables, setTables] = useState(INIT_TABLES);
+  const statusColor = {available:C.green,occupied:C.orange,reserved:C.blue};
+  const statusLabel = {available:"Tersedia",occupied:"Terisi",reserved:"Reservasi"};
+  const statusCycle = id => {
+    const order = ["available","occupied","reserved"];
+    setTables(t=>t.map(tb=>tb.id===id?{...tb,status:order[(order.indexOf(tb.status)+1)%3]}:tb));
+  };
+
+  return (
+    <div style={{padding:"22px",flex:1,overflowY:"auto"}}>
+      <div style={{marginBottom:"20px",display:"flex",justifyContent:"space-between",alignItems:"end"}}>
+        <div>
+          <h2 style={{color:C.cream,fontWeight:600,fontSize:"1.05rem"}}>Manajemen Meja</h2>
+          <p style={{color:C.creamDim,fontSize:"0.78rem",marginTop:"3px"}}>{tables.filter(t=>t.status==="available").length} dari {tables.length} meja tersedia</p>
+        </div>
+        <div style={{display:"flex",gap:"12px"}}>
+          {Object.entries(statusLabel).map(([k,v])=>(
+            <div key={k} style={{display:"flex",alignItems:"center",gap:"6px",fontSize:"0.73rem",color:C.creamDim}}>
+              <div style={{width:"8px",height:"8px",borderRadius:"50%",background:statusColor[k]}}></div>{v}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"10px"}}>
+        {tables.map(tb=>(
+          <div key={tb.id} style={{background:C.card,border:`2px solid ${statusColor[tb.status]}44`,borderRadius:"12px",padding:"18px 14px",cursor:"pointer",transition:"0.15s",display:"flex",flexDirection:"column",gap:"8px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+              <div style={{fontSize:"1.3rem",fontWeight:700,color:C.cream}}>{tb.label}</div>
+              <div style={{width:"9px",height:"9px",borderRadius:"50%",background:statusColor[tb.status],marginTop:"4px"}}></div>
+            </div>
+            <div style={{fontSize:"0.73rem",color:statusColor[tb.status],fontWeight:500}}>{statusLabel[tb.status]}</div>
+            {tb.status==="occupied" && <div style={{fontSize:"0.7rem",color:C.creamDim}}>{tb.pax} orang</div>}
+            <button onClick={()=>statusCycle(tb.id)} style={{padding:"5px 8px",borderRadius:"6px",border:`1px solid ${C.border}`,background:"none",color:C.creamDim,fontSize:"0.68rem",cursor:"pointer",fontFamily:"DM Sans",marginTop:"auto"}}>Ubah Status</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// KITCHEN DISPLAY
+// ══════════════════════════════════════════════════════════════════════════
+function KitchenScreen() {
+  const [orders, setOrders] = useState([
+    {id:"ORD-001",table:"T2",time:"12:30",items:[{name:"Mie Yamin Tasik Manis",qty:2},{name:"Rohah Signature",qty:2}],status:"cooking",elapsed:8},
+    {id:"ORD-002",table:"T4",time:"12:35",items:[{name:"Nasi Sop Buntut",qty:1},{name:"Dark Chocolate",qty:1},{name:"Pempek (7 pcs)",qty:1}],status:"cooking",elapsed:3},
+    {id:"ORD-003",table:"T6",time:"12:28",items:[{name:"Bubur Ayam",qty:1},{name:"Teh Dilmah Chamomile",qty:1}],status:"ready",elapsed:14},
+    {id:"ORD-004",table:"T10",time:"12:40",items:[{name:"Dimsum Mix (6 pcs)",qty:2},{name:"Americano Hot/Ice",qty:2}],status:"pending",elapsed:1},
+    {id:"ORD-005",table:"T12",time:"12:38",items:[{name:"Nasi Goreng Special",qty:2},{name:"Long Black",qty:1}],status:"pending",elapsed:4},
+  ]);
+  const advance = id => setOrders(o=>o.map(ord=>ord.id===id?{...ord,status:ord.status==="pending"?"cooking":ord.status==="cooking"?"ready":"done"}:ord));
+  const s = {pending:{bg:`${C.orange}22`,border:C.orange,label:"Pending",next:"Mulai Masak"},cooking:{bg:`${C.blue}22`,border:C.blue,label:"Memasak",next:"Tandai Siap"},ready:{bg:`${C.green}22`,border:C.green,label:"Siap",next:"Selesai"},done:{bg:`${C.border}22`,border:C.border,label:"Selesai",next:""}};
+
+  return (
+    <div style={{padding:"22px",flex:1,overflowY:"auto"}}>
+      <div style={{marginBottom:"18px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <h2 style={{color:C.cream,fontWeight:600,fontSize:"1.05rem"}}>Kitchen Display System</h2>
+        <div style={{fontSize:"0.78rem",color:C.creamDim}}>{orders.filter(o=>o.status!=="done").length} pesanan aktif</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"10px"}}>
+        {orders.filter(o=>o.status!=="done").map(ord=>{
+          const st=s[ord.status];
+          return (
+            <div key={ord.id} style={{background:st.bg,border:`1px solid ${st.border}66`,borderRadius:"12px",padding:"14px",display:"flex",flexDirection:"column",gap:"10px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+                <div>
+                  <div style={{fontWeight:600,color:C.cream,fontSize:"0.88rem"}}>{ord.id}</div>
+                  <div style={{fontSize:"0.72rem",color:C.creamDim,marginTop:"2px"}}>{ord.table} · {ord.time}</div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"end",gap:"4px"}}>
+                  <div style={{fontSize:"0.68rem",fontWeight:600,color:st.border,background:`${st.border}22`,padding:"2px 8px",borderRadius:"10px"}}>{st.label}</div>
+                  <div style={{fontSize:"0.68rem",color:ord.elapsed>10?C.orange:C.creamDim}}>{ord.elapsed} mnt</div>
+                </div>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:"5px"}}>
+                {ord.items.map((item,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:"0.8rem"}}>
+                    <span style={{color:C.cream}}>{item.name}</span>
+                    <span style={{color:C.gold,fontWeight:600}}>×{item.qty}</span>
+                  </div>
+                ))}
+              </div>
+              {st.next && <button onClick={()=>advance(ord.id)} style={{padding:"7px",background:st.border,color:C.bg,border:"none",borderRadius:"8px",fontSize:"0.76rem",fontWeight:600,cursor:"pointer",fontFamily:"DM Sans"}}>{st.next}</button>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// REPORTS (Manager/Owner)
+// ══════════════════════════════════════════════════════════════════════════
+function ReportScreen() {
+  const [period, setPeriod] = useState("today");
+  const data = {today:{revenue:1847000,orders:38,items:94,avg:48605},week:{revenue:11230000,orders:218,items:520,avg:51514},month:{revenue:42850000,orders:847,items:2100,avg:50590}};
+  const d = data[period];
+  const topItems = [{name:"Rohah Signature",qty:42,rev:1050000},{name:"Mie Yamin Tasik Manis",qty:38,rev:1330000},{name:"Nasi Sop Buntut",qty:22,rev:1430000},{name:"Cappuccino",qty:35,rev:875000},{name:"Pempek (7 pcs)",qty:30,rev:1350000}];
+  const txns = [{id:"TXN-2941",time:"13:42",table:"T3",items:3,total:85000,method:"QRIS"},{id:"TXN-2940",time:"13:15",table:"T7",items:2,total:55000,method:"Cash"},{id:"TXN-2939",time:"12:58",table:"T2",items:5,total:138000,method:"Debit"},{id:"TXN-2938",time:"12:30",table:"T5",items:1,total:35000,method:"Cash"},{id:"TXN-2937",time:"12:10",table:"T9",items:4,total:112000,method:"QRIS"}];
+
+  return (
+    <div style={{padding:"22px",flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:"16px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <h2 style={{color:C.cream,fontWeight:600,fontSize:"1.05rem"}}>Laporan Penjualan</h2>
+        <div style={{display:"flex",gap:"4px"}}>
+          {[["today","Hari Ini"],["week","Minggu Ini"],["month","Bulan Ini"]].map(([k,l])=>(
+            <button key={k} onClick={()=>setPeriod(k)} style={{padding:"6px 12px",borderRadius:"6px",border:"none",cursor:"pointer",fontSize:"0.76rem",fontWeight:500,background:period===k?C.gold:C.card,color:period===k?C.bg:C.creamDim,fontFamily:"DM Sans"}}>{l}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"10px"}}>
+        {[{label:"Total Pendapatan",value:fmt(d.revenue),icon:"💰",color:C.gold},{label:"Total Order",value:d.orders,icon:"📋",color:C.blue},{label:"Item Terjual",value:d.items,icon:"🍜",color:C.green},{label:"Rata-rata Transaksi",value:fmt(d.avg),icon:"📊",color:C.orange}].map(kpi=>(
+          <div key={kpi.label} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"12px",padding:"14px 16px"}}>
+            <div style={{fontSize:"1.3rem",marginBottom:"8px"}}>{kpi.icon}</div>
+            <div style={{fontSize:"1.2rem",fontWeight:700,color:kpi.color,marginBottom:"3px"}}>{kpi.value}</div>
+            <div style={{fontSize:"0.72rem",color:C.creamDim}}>{kpi.label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px"}}>
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"12px",padding:"16px"}}>
+          <div style={{fontWeight:600,color:C.cream,fontSize:"0.86rem",marginBottom:"12px"}}>Menu Terlaris</div>
+          {topItems.map((item,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"9px"}}>
+              <div style={{width:"20px",height:"20px",borderRadius:"50%",background:i===0?C.gold:C.border,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.65rem",fontWeight:700,color:i===0?C.bg:C.creamDim,flexShrink:0}}>{i+1}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:"0.78rem",color:C.cream}}>{item.name}</div>
+                <div style={{height:"3px",background:C.border,borderRadius:"2px",marginTop:"4px",overflow:"hidden"}}><div style={{height:"100%",background:i===0?C.gold:C.creamDim,width:`${(item.qty/42)*100}%`,borderRadius:"2px"}}></div></div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:"0.75rem",color:C.gold}}>{fmt(item.rev)}</div>
+                <div style={{fontSize:"0.68rem",color:C.creamDim}}>{item.qty} pcs</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"12px",padding:"16px"}}>
+          <div style={{fontWeight:600,color:C.cream,fontSize:"0.86rem",marginBottom:"12px"}}>Transaksi Terbaru</div>
+          {txns.map(t=>(
+            <div key={t.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:`1px solid ${C.border}33`}}>
+              <div>
+                <div style={{fontSize:"0.78rem",color:C.cream,fontWeight:500}}>{t.id}</div>
+                <div style={{fontSize:"0.68rem",color:C.creamDim}}>{t.time} · {t.table} · {t.items} item</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:"0.82rem",color:C.gold,fontWeight:600}}>{fmt(t.total)}</div>
+                <div style={{fontSize:"0.66rem",color:C.creamDim}}>{t.method}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// LOYALTY (Manager/Owner)
+// ══════════════════════════════════════════════════════════════════════════
+function LoyaltyScreen() {
+  const [customers, setCustomers] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    POS_DB.getCustomers().then(data => { setCustomers(data||[]); setLoading(false); });
+  }, []);
+
+  const tierColor = {Bronze:C.orange,Silver:"#aaa",Gold:C.gold,Platinum:C.blue};
+  const filtered = customers.filter(c=>c.name.toLowerCase().includes(search.toLowerCase())||c.phone?.includes(search));
+
+  return (
+    <div style={{padding:"22px",flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:"16px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <h2 style={{color:C.cream,fontWeight:600,fontSize:"1.05rem"}}>Program Loyalitas</h2>
+        <button style={{padding:"7px 14px",background:C.gold,color:C.bg,border:"none",borderRadius:"8px",fontSize:"0.78rem",fontWeight:600,cursor:"pointer",fontFamily:"DM Sans"}}>+ Pelanggan Baru</button>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"8px"}}>
+        {Object.entries(tierColor).map(([tier,color])=>{
+          const count = customers.filter(c=>c.tier===tier).length;
+          return (
+            <div key={tier} style={{background:C.card,border:`1px solid ${color}44`,borderRadius:"10px",padding:"12px 14px"}}>
+              <div style={{fontSize:"0.72rem",color,fontWeight:600,marginBottom:"5px"}}>{tier}</div>
+              <div style={{fontSize:"1.5rem",fontWeight:700,color:C.cream}}>{count}</div>
+              <div style={{fontSize:"0.68rem",color:C.creamDim}}>pelanggan</div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:"8px",background:C.card,border:`1px solid ${C.border}`,borderRadius:"8px",padding:"8px 12px",maxWidth:"300px"}}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.creamDim} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari pelanggan..." style={{background:"none",border:"none",outline:"none",color:C.cream,fontSize:"0.83rem",fontFamily:"DM Sans",width:"100%"}}/>
+      </div>
+      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"12px",overflow:"hidden"}}>
+        <div style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1fr 1fr 1fr",padding:"10px 14px",background:C.sidebar,fontSize:"0.7rem",color:C.creamDim,fontWeight:500,letterSpacing:"0.06em",textTransform:"uppercase"}}>
+          {["Nama","No. HP","Tier","Poin","Kunjungan","Terakhir"].map(h=><div key={h}>{h}</div>)}
+        </div>
+        {loading ? <div style={{padding:"20px",textAlign:"center",color:C.creamDim}}>Memuat...</div> : filtered.map((c,i)=>(
+          <div key={c.id} style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1fr 1fr 1fr",padding:"11px 14px",background:i%2===0?C.card:C.sidebar,fontSize:"0.8rem",alignItems:"center",cursor:"pointer",transition:"0.1s"}}>
+            <div style={{fontWeight:500,color:C.cream}}>{c.name}</div>
+            <div style={{color:C.creamDim}}>{c.phone}</div>
+            <div><span style={{background:`${tierColor[c.tier]}22`,color:tierColor[c.tier],padding:"2px 7px",borderRadius:"10px",fontSize:"0.7rem",fontWeight:600}}>{c.tier}</span></div>
+            <div style={{color:C.gold,fontWeight:600}}>{(c.points||0).toLocaleString()}</div>
+            <div style={{color:C.creamDim}}>{c.visits}x</div>
+            <div style={{color:C.creamDim,fontSize:"0.72rem"}}>{c.last_visit}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MENU MANAGEMENT (Admin/Owner)
+// ══════════════════════════════════════════════════════════════════════════
+function MenuMgmtScreen() {
+  const [activeCat, setActiveCat] = useState("Main Dish");
+  const [showAdd, setShowAdd] = useState(false);
+  const [editItem, setEditItem] = useState(null);   // item being edited
+  const [confirmNonaktif, setConfirmNonaktif] = useState(null); // item to deactivate
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState("");
+  const [newItem, setNewItem] = useState({name:"",price:"",category:"Main Dish",emoji:"🍽️",description:""});
+  const [items, setItems] = useState(MENU_DATA);
+
+  const cats = Object.keys(items);
+
+  const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(""), 2500); };
+
+  // ── ADD ──────────────────────────────────────────────────────────
+  const handleAdd = async () => {
+    if (!newItem.name || !newItem.price) return;
+    setSaving(true);
+    try {
+      const created = await POS_DB.createMenuItem({...newItem, price:parseInt(newItem.price), active:true});
+      const itemToAdd = {...newItem, price:parseInt(newItem.price), id: created?.id || Date.now()};
+      setItems(prev => ({...prev, [newItem.category]: [...(prev[newItem.category]||[]), itemToAdd]}));
+      setShowAdd(false);
+      setNewItem({name:"",price:"",category:"Main Dish",emoji:"🍽️",description:""});
+      showToast("✅ Menu berhasil ditambahkan!");
+    } catch(e) { showToast("❌ Gagal menyimpan. Coba lagi."); }
+    setSaving(false);
+  };
+
+  // ── EDIT ─────────────────────────────────────────────────────────
+  const openEdit = (item, cat) => setEditItem({...item, category: cat, priceStr: String(item.price)});
+
+  const handleEdit = async () => {
+    if (!editItem.name || !editItem.priceStr) return;
+    setSaving(true);
+    try {
+      const updates = { name:editItem.name, price:parseInt(editItem.priceStr), emoji:editItem.emoji, description:editItem.description, category:editItem.category };
+      await POS_DB.updateMenuItem(editItem.id, updates);
+      // Update local state — move to new category if changed
+      setItems(prev => {
+        const next = {...prev};
+        // Remove from old category
+        Object.keys(next).forEach(cat => { next[cat] = next[cat].filter(i=>i.id!==editItem.id); });
+        // Add to (possibly new) category
+        const updatedItem = {...editItem, price:parseInt(editItem.priceStr)};
+        next[editItem.category] = [...(next[editItem.category]||[]), updatedItem];
+        return next;
+      });
+      setEditItem(null);
+      showToast("✅ Menu berhasil diperbarui!");
+    } catch(e) { showToast("❌ Gagal menyimpan. Coba lagi."); }
+    setSaving(false);
+  };
+
+  // ── NONAKTIF ─────────────────────────────────────────────────────
+  const handleNonaktif = async () => {
+    if (!confirmNonaktif) return;
+    setSaving(true);
+    try {
+      await POS_DB.updateMenuItem(confirmNonaktif.id, {active:false});
+      setItems(prev => ({...prev, [confirmNonaktif.cat]: prev[confirmNonaktif.cat].filter(i=>i.id!==confirmNonaktif.id)}));
+      setConfirmNonaktif(null);
+      showToast("⚠️ Menu dinonaktifkan.");
+    } catch(e) { showToast("❌ Gagal. Coba lagi."); }
+    setSaving(false);
+  };
+
+  const FIELDS = [
+    {label:"Nama Menu",     key:"name",        type:"text",   placeholder:"Nama item..."},
+    {label:"Harga (Rp)",   key:"priceStr",    type:"number", placeholder:"25000"},
+    {label:"Emoji",        key:"emoji",        type:"text",   placeholder:"☕"},
+    {label:"Deskripsi",   key:"description",  type:"text",   placeholder:"Deskripsi menu..."},
+  ];
+
+  const ItemFormModal = ({title, data, setData, onSave, onClose}) => (
+    <div style={{position:"fixed",inset:0,background:"#00000088",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{background:C.sidebar,border:`1px solid ${C.border}`,borderRadius:"16px",padding:"24px",width:"420px",display:"flex",flexDirection:"column",gap:"12px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontWeight:600,color:C.cream,fontSize:"0.96rem"}}>{title}</div>
+          <button onClick={onClose} style={{background:"none",border:"none",color:C.creamDim,cursor:"pointer",fontSize:"1.2rem"}}>×</button>
+        </div>
+        {FIELDS.map(f=>(
+          <div key={f.key} style={{display:"flex",flexDirection:"column",gap:"4px"}}>
+            <label style={{fontSize:"0.72rem",color:C.creamDim,fontWeight:500}}>{f.label}</label>
+            <input type={f.type} value={data[f.key]||""} onChange={e=>setData(p=>({...p,[f.key]:e.target.value}))} placeholder={f.placeholder}
+              style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"8px",padding:"9px 12px",color:C.cream,fontSize:"0.83rem",outline:"none",fontFamily:"DM Sans"}}/>
+          </div>
+        ))}
+        <div style={{display:"flex",flexDirection:"column",gap:"4px"}}>
+          <label style={{fontSize:"0.72rem",color:C.creamDim,fontWeight:500}}>Kategori</label>
+          <select value={data.category||"Main Dish"} onChange={e=>setData(p=>({...p,category:e.target.value}))}
+            style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"8px",padding:"9px 12px",color:C.cream,fontSize:"0.83rem",outline:"none",fontFamily:"DM Sans"}}>
+            {cats.map(c=><option key={c}>{c}</option>)}
+          </select>
+        </div>
+        <div style={{display:"flex",gap:"8px",marginTop:"6px"}}>
+          <button onClick={onClose} style={{flex:1,padding:"11px",background:C.card,border:`1px solid ${C.border}`,borderRadius:"8px",color:C.creamDim,fontSize:"0.83rem",cursor:"pointer",fontFamily:"DM Sans"}}>Batal</button>
+          <button onClick={onSave} disabled={saving} style={{flex:2,padding:"11px",background:C.gold,color:C.bg,border:"none",borderRadius:"8px",fontSize:"0.83rem",fontWeight:600,cursor:"pointer",fontFamily:"DM Sans",opacity:saving?0.7:1}}>
+            {saving ? "Menyimpan..." : "Simpan"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{padding:"22px",flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:"16px",position:"relative"}}>
+      {/* Toast */}
+      {toast && (
+        <div style={{position:"fixed",top:"60px",left:"50%",transform:"translateX(-50%)",background:C.sidebar,border:`1px solid ${C.border}`,borderRadius:"10px",padding:"10px 20px",fontSize:"0.83rem",color:C.cream,zIndex:400,boxShadow:"0 4px 20px #00000066"}}>
+          {toast}
+        </div>
+      )}
+
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <h2 style={{color:C.cream,fontWeight:600,fontSize:"1.05rem"}}>Manajemen Menu</h2>
+        <button onClick={()=>setShowAdd(true)} style={{padding:"8px 14px",background:C.gold,color:C.bg,border:"none",borderRadius:"8px",fontSize:"0.78rem",fontWeight:600,cursor:"pointer",fontFamily:"DM Sans"}}>+ Tambah Item</button>
+      </div>
+
+      <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+        {cats.map(c=>(
+          <button key={c} onClick={()=>setActiveCat(c)} style={{padding:"6px 14px",borderRadius:"20px",border:"none",cursor:"pointer",fontSize:"0.76rem",fontWeight:500,background:activeCat===c?C.gold:C.card,color:activeCat===c?C.bg:C.creamDim,fontFamily:"DM Sans",transition:"0.15s"}}>
+            {c} ({(items[c]||[]).length})
+          </button>
+        ))}
+      </div>
+
+      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"12px",overflow:"hidden"}}>
+        <div style={{display:"grid",gridTemplateColumns:"0.4fr 2fr 1fr 1fr 1fr",padding:"10px 14px",background:C.sidebar,fontSize:"0.7rem",color:C.creamDim,fontWeight:500,letterSpacing:"0.06em",textTransform:"uppercase"}}>
+          {["","Nama Menu","Harga","Status","Aksi"].map(h=><div key={h}>{h}</div>)}
+        </div>
+        {(items[activeCat]||[]).length === 0 && (
+          <div style={{padding:"24px",textAlign:"center",color:C.creamDim,fontSize:"0.82rem"}}>Tidak ada item aktif di kategori ini.</div>
+        )}
+        {(items[activeCat]||[]).map((item,i)=>(
+          <div key={item.id} style={{display:"grid",gridTemplateColumns:"0.4fr 2fr 1fr 1fr 1fr",padding:"11px 14px",background:i%2===0?C.card:C.sidebar,fontSize:"0.8rem",alignItems:"center",transition:"0.1s"}}>
+            <div style={{fontSize:"1.3rem"}}>{item.emoji}</div>
+            <div style={{fontWeight:500,color:C.cream}}>{item.name}</div>
+            <div style={{color:C.gold,fontWeight:600}}>{fmt(item.price)}</div>
+            <div><span style={{background:`${C.green}22`,color:C.green,padding:"2px 7px",borderRadius:"10px",fontSize:"0.7rem"}}>Aktif</span></div>
+            <div style={{display:"flex",gap:"5px"}}>
+              <button onClick={()=>openEdit(item, activeCat)}
+                style={{padding:"4px 10px",background:"none",border:`1px solid ${C.border}`,borderRadius:"6px",color:C.creamDim,fontSize:"0.72rem",cursor:"pointer",fontFamily:"DM Sans",transition:"0.1s"}}>
+                ✏️ Edit
+              </button>
+              <button onClick={()=>setConfirmNonaktif({...item, cat:activeCat})}
+                style={{padding:"4px 8px",background:"none",border:`1px solid ${C.red}44`,borderRadius:"6px",color:C.red,fontSize:"0.72rem",cursor:"pointer",fontFamily:"DM Sans"}}>
+                🚫 Nonaktif
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ADD MODAL */}
+      {showAdd && <ItemFormModal title="Tambah Menu Baru" data={newItem} setData={setNewItem} onSave={handleAdd} onClose={()=>setShowAdd(false)}/>}
+
+      {/* EDIT MODAL */}
+      {editItem && <ItemFormModal title="Edit Menu" data={editItem} setData={setEditItem} onSave={handleEdit} onClose={()=>setEditItem(null)}/>}
+
+      {/* CONFIRM NONAKTIF */}
+      {confirmNonaktif && (
+        <div style={{position:"fixed",inset:0,background:"#00000088",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}} onClick={()=>setConfirmNonaktif(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.sidebar,border:`1px solid ${C.border}`,borderRadius:"16px",padding:"24px",width:"360px",display:"flex",flexDirection:"column",gap:"14px"}}>
+            <div style={{fontWeight:600,color:C.cream}}>Nonaktifkan Menu?</div>
+            <div style={{background:`${C.red}18`,border:`1px solid ${C.red}44`,borderRadius:"10px",padding:"12px 14px",display:"flex",alignItems:"center",gap:"10px"}}>
+              <span style={{fontSize:"1.4rem"}}>{confirmNonaktif.emoji}</span>
+              <div>
+                <div style={{fontSize:"0.85rem",color:C.cream,fontWeight:500}}>{confirmNonaktif.name}</div>
+                <div style={{fontSize:"0.75rem",color:C.creamDim,marginTop:"2px"}}>{fmt(confirmNonaktif.price)}</div>
+              </div>
+            </div>
+            <div style={{fontSize:"0.78rem",color:C.creamDim,lineHeight:1.6}}>Menu ini akan disembunyikan dari kasir dan tidak bisa dipesan. Anda bisa mengaktifkan kembali dari database.</div>
+            <div style={{display:"flex",gap:"8px"}}>
+              <button onClick={()=>setConfirmNonaktif(null)} style={{flex:1,padding:"11px",background:C.card,border:`1px solid ${C.border}`,borderRadius:"8px",color:C.creamDim,fontSize:"0.83rem",cursor:"pointer",fontFamily:"DM Sans"}}>Batal</button>
+              <button onClick={handleNonaktif} disabled={saving} style={{flex:2,padding:"11px",background:C.red,color:"#fff",border:"none",borderRadius:"8px",fontSize:"0.83rem",fontWeight:600,cursor:"pointer",fontFamily:"DM Sans",opacity:saving?0.7:1}}>
+                {saving ? "Memproses..." : "Ya, Nonaktifkan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SETTINGS (Owner only)
+// ══════════════════════════════════════════════════════════════════════════
+function SettingsScreen() {
+  const [employees, setEmployees] = useState([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newEmp, setNewEmp] = useState({name:"",role:"kasir",pin:""});
+  const [loading, setLoading] = useState(true);
+  const [supabaseUrl, setSupabaseUrl] = useState(window.SUPABASE_URL || "");
+  const [supabaseKey, setSupabaseKey] = useState("");
+  const [activeTab, setActiveTab] = useState("users");
+
+  useEffect(() => {
+    POS_DB.getEmployees().then(data => { setEmployees(data||[]); setLoading(false); });
+  }, []);
+
+  const handleAddEmployee = async () => {
+    if (!newEmp.name || !newEmp.pin || newEmp.pin.length < 4) return;
+    const created = await POS_DB.createEmployee(newEmp);
+    setEmployees(prev => [...prev, created]);
+    setShowAdd(false);
+    setNewEmp({name:"",role:"kasir",pin:""});
+  };
+
+  const handleDelete = async (id) => {
+    await POS_DB.deleteEmployee(id);
+    setEmployees(prev => prev.filter(e => e.id !== id));
+  };
+
+  const roleColor = {kasir:C.green,admin:C.blue,manager:C.orange,owner:C.gold};
+
+  return (
+    <div style={{padding:"22px",flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:"16px"}}>
+      <h2 style={{color:C.cream,fontWeight:600,fontSize:"1.05rem"}}>Pengaturan Sistem</h2>
+
+      {/* Tabs */}
+      <div style={{display:"flex",gap:"4px",borderBottom:`1px solid ${C.border}`,paddingBottom:"0"}}>
+        {[["users","👥 Manajemen Akun"],["supabase","🗄️ Database"],["cafe","🏪 Info Cafe"]].map(([k,l])=>(
+          <button key={k} onClick={()=>setActiveTab(k)} style={{padding:"8px 16px",background:"none",border:"none",borderBottom:`2px solid ${activeTab===k?C.gold:"transparent"}`,color:activeTab===k?C.gold:C.creamDim,fontSize:"0.8rem",fontWeight:500,cursor:"pointer",fontFamily:"DM Sans",marginBottom:"-1px",transition:"0.15s"}}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {/* USERS TAB */}
+      {activeTab==="users" && (
+        <>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontSize:"0.82rem",color:C.creamDim}}>{employees.filter(e=>e.active!==false).length} akun aktif</div>
+            <button onClick={()=>setShowAdd(true)} style={{padding:"7px 14px",background:C.gold,color:C.bg,border:"none",borderRadius:"8px",fontSize:"0.78rem",fontWeight:600,cursor:"pointer",fontFamily:"DM Sans"}}>+ Tambah Akun</button>
+          </div>
+          <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"12px",overflow:"hidden"}}>
+            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",padding:"10px 14px",background:C.sidebar,fontSize:"0.7rem",color:C.creamDim,fontWeight:500,letterSpacing:"0.06em",textTransform:"uppercase"}}>
+              {["Nama","Role","PIN","Aksi"].map(h=><div key={h}>{h}</div>)}
+            </div>
+            {loading ? <div style={{padding:"16px",textAlign:"center",color:C.creamDim}}>Memuat...</div> : employees.filter(e=>e.active!==false).map((emp,i)=>(
+              <div key={emp.id} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",padding:"11px 14px",background:i%2===0?C.card:C.sidebar,alignItems:"center"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                  <div style={{width:"28px",height:"28px",borderRadius:"50%",background:`${roleColor[emp.role]}22`,border:`1px solid ${roleColor[emp.role]}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.8rem"}}>
+                    {ROLES[emp.role]?.icon}
+                  </div>
+                  <span style={{fontSize:"0.82rem",color:C.cream,fontWeight:500}}>{emp.name}</span>
+                </div>
+                <div><span style={{background:`${roleColor[emp.role]}22`,color:roleColor[emp.role],padding:"2px 8px",borderRadius:"10px",fontSize:"0.7rem",fontWeight:600,textTransform:"capitalize"}}>{emp.role}</span></div>
+                <div style={{fontSize:"0.82rem",color:C.creamDim,letterSpacing:"0.2em"}}>{"•".repeat(emp.pin?.length||4)}</div>
+                <div style={{display:"flex",gap:"5px"}}>
+                  <button style={{padding:"4px 10px",background:"none",border:`1px solid ${C.border}`,borderRadius:"6px",color:C.creamDim,fontSize:"0.7rem",cursor:"pointer",fontFamily:"DM Sans"}}>Edit PIN</button>
+                  {emp.role!=="owner" && <button onClick={()=>handleDelete(emp.id)} style={{padding:"4px 8px",background:"none",border:`1px solid ${C.red}44`,borderRadius:"6px",color:C.red,fontSize:"0.7rem",cursor:"pointer",fontFamily:"DM Sans"}}>Hapus</button>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ADD EMPLOYEE MODAL */}
+          {showAdd && (
+            <div style={{position:"fixed",inset:0,background:"#00000088",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}} onClick={()=>setShowAdd(false)}>
+              <div onClick={e=>e.stopPropagation()} style={{background:C.sidebar,border:`1px solid ${C.border}`,borderRadius:"16px",padding:"24px",width:"360px",display:"flex",flexDirection:"column",gap:"12px"}}>
+                <div style={{fontWeight:600,color:C.cream}}>Tambah Akun Baru</div>
+                {[{label:"Nama Lengkap",key:"name",placeholder:"Nama karyawan..."},{label:"PIN (4-6 digit)",key:"pin",placeholder:"••••"}].map(f=>(
+                  <div key={f.key} style={{display:"flex",flexDirection:"column",gap:"4px"}}>
+                    <label style={{fontSize:"0.72rem",color:C.creamDim,fontWeight:500}}>{f.label}</label>
+                    <input type={f.key==="pin"?"password":"text"} value={newEmp[f.key]} onChange={e=>setNewEmp(p=>({...p,[f.key]:e.target.value}))} placeholder={f.placeholder} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"8px",padding:"9px 12px",color:C.cream,fontSize:"0.83rem",outline:"none",fontFamily:"DM Sans"}}/>
+                  </div>
+                ))}
+                <div style={{display:"flex",flexDirection:"column",gap:"4px"}}>
+                  <label style={{fontSize:"0.72rem",color:C.creamDim,fontWeight:500}}>Role</label>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px"}}>
+                    {Object.entries(ROLES).map(([k,v])=>(
+                      <button key={k} onClick={()=>setNewEmp(p=>({...p,role:k}))} style={{padding:"9px",borderRadius:"8px",border:newEmp.role===k?`1px solid ${v.color}`:`1px solid ${C.border}`,background:newEmp.role===k?`${v.color}18`:C.card,color:newEmp.role===k?v.color:C.creamDim,fontSize:"0.78rem",fontWeight:500,cursor:"pointer",fontFamily:"DM Sans",display:"flex",alignItems:"center",gap:"6px",justifyContent:"center"}}>
+                        <span>{v.icon}</span><span>{v.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:"8px",marginTop:"6px"}}>
+                  <button onClick={()=>setShowAdd(false)} style={{flex:1,padding:"11px",background:C.card,border:`1px solid ${C.border}`,borderRadius:"8px",color:C.creamDim,fontSize:"0.83rem",cursor:"pointer",fontFamily:"DM Sans"}}>Batal</button>
+                  <button onClick={handleAddEmployee} style={{flex:2,padding:"11px",background:C.gold,color:C.bg,border:"none",borderRadius:"8px",fontSize:"0.83rem",fontWeight:600,cursor:"pointer",fontFamily:"DM Sans"}}>Simpan Akun</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* SUPABASE TAB */}
+      {activeTab==="supabase" && (
+        <div style={{display:"flex",flexDirection:"column",gap:"14px",maxWidth:"600px"}}>
+          <div style={{background:`${window.USE_SUPABASE?C.green:C.orange}18`,border:`1px solid ${window.USE_SUPABASE?C.green:C.orange}44`,borderRadius:"10px",padding:"12px 16px",display:"flex",alignItems:"center",gap:"10px"}}>
+            <div style={{fontSize:"1.2rem"}}>{window.USE_SUPABASE?"✅":"⚠️"}</div>
+            <div>
+              <div style={{fontSize:"0.82rem",fontWeight:600,color:window.USE_SUPABASE?C.green:C.orange}}>{window.USE_SUPABASE?"Supabase Terhubung":"Demo Mode Aktif (localStorage)"}</div>
+              <div style={{fontSize:"0.72rem",color:C.creamDim,marginTop:"2px"}}>{window.USE_SUPABASE?"Data tersimpan di cloud Supabase":"Edit file supabase-config.js dan isi URL & API Key Anda"}</div>
+            </div>
+          </div>
+          <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"12px",padding:"18px",display:"flex",flexDirection:"column",gap:"12px"}}>
+            <div style={{fontSize:"0.85rem",fontWeight:600,color:C.cream}}>Konfigurasi Supabase</div>
+            <div style={{fontSize:"0.75rem",color:C.creamDim,lineHeight:1.6}}>Edit file <code style={{background:C.border,padding:"1px 5px",borderRadius:"3px",color:C.gold}}>supabase-config.js</code> di project ini dan isi:</div>
+            {[{label:"Supabase Project URL",placeholder:"https://xxxx.supabase.co",val:supabaseUrl,set:setSupabaseUrl},{label:"Supabase Anon Key",placeholder:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",val:supabaseKey,set:setSupabaseKey}].map(f=>(
+              <div key={f.label} style={{display:"flex",flexDirection:"column",gap:"4px"}}>
+                <label style={{fontSize:"0.72rem",color:C.creamDim,fontWeight:500}}>{f.label}</label>
+                <input value={f.val} onChange={e=>f.set(e.target.value)} placeholder={f.placeholder} style={{background:C.sidebar,border:`1px solid ${C.border}`,borderRadius:"8px",padding:"9px 12px",color:C.cream,fontSize:"0.78rem",outline:"none",fontFamily:"DM Sans"}}/>
+              </div>
+            ))}
+            <div style={{background:`${C.blue}18`,border:`1px solid ${C.blue}44`,borderRadius:"8px",padding:"10px 12px"}}>
+              <div style={{fontSize:"0.73rem",color:C.blue,fontWeight:600,marginBottom:"4px"}}>📋 SQL Schema tersedia di supabase-config.js</div>
+              <div style={{fontSize:"0.7rem",color:C.creamDim}}>Buka Supabase → SQL Editor → paste schema dari file config → run</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CAFE TAB */}
+      {activeTab==="cafe" && (
+        <div style={{display:"flex",flexDirection:"column",gap:"12px",maxWidth:"500px"}}>
+          {[{label:"Nama Cafe",val:"ROHAH Cafe"},{label:"Tagline",val:"Cafe · Boutique · Space"},{label:"Alamat",val:"Ruko Jl. Festive Garden, Jl. Grand Wisata No.83, Tambun Sel., Bekasi"},{label:"Instagram",val:"@rohah.cafe"},{label:"Pajak (PPN)",val:"10%"},{label:"Mata Uang",val:"IDR (Rp)"}].map(f=>(
+            <div key={f.label} style={{display:"flex",flexDirection:"column",gap:"4px"}}>
+              <label style={{fontSize:"0.72rem",color:C.creamDim,fontWeight:500}}>{f.label}</label>
+              <input defaultValue={f.val} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"8px",padding:"9px 12px",color:C.cream,fontSize:"0.83rem",outline:"none",fontFamily:"DM Sans"}}/>
+            </div>
+          ))}
+          <button style={{padding:"11px",background:C.gold,color:C.bg,border:"none",borderRadius:"8px",fontSize:"0.83rem",fontWeight:600,cursor:"pointer",fontFamily:"DM Sans",alignSelf:"start",marginTop:"8px"}}>Simpan Perubahan</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MAIN APP
+// ══════════════════════════════════════════════════════════════════════════
+function App() {
+  const [user, setUser] = useState(null);
+  const [activeScreen, setActiveScreen] = useState(null);
+  const [clock, setClock] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setClock(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    const role = ROLES[userData.role];
+    setActiveScreen(role.screens[0]);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setActiveScreen(null);
+  };
+
+  if (!user) return <LoginScreen onLogin={handleLogin}/>;
+
+  const role = ROLES[user.role];
+  const allowedScreens = role.screens;
+
+  const NAV_ITEMS = [
+    {id:"cashier",  label:"Kasir",   icon:"🏧"},
+    {id:"table",    label:"Meja",    icon:"🪑"},
+    {id:"kitchen",  label:"Dapur",   icon:"👨‍🍳"},
+    {id:"report",   label:"Laporan", icon:"📊"},
+    {id:"loyalty",  label:"Loyalty", icon:"💛"},
+    {id:"menuMgmt", label:"Menu",    icon:"📋"},
+    {id:"settings", label:"Setting", icon:"⚙️"},
+  ].filter(n => allowedScreens.includes(n.id));
+
+  const SCREENS = {cashier:<CashierScreen user={user}/>,table:<TableScreen/>,kitchen:<KitchenScreen/>,report:<ReportScreen/>,loyalty:<LoyaltyScreen/>,menuMgmt:<MenuMgmtScreen/>,settings:<SettingsScreen/>};
+
+  return (
+    <div style={{display:"flex",height:"100vh",background:C.bg,color:C.cream}}>
+      {/* Sidebar */}
+      <div style={{width:"74px",background:C.sidebar,display:"flex",flexDirection:"column",alignItems:"center",padding:"14px 0",gap:"2px",borderRight:`1px solid ${C.border}`,flexShrink:0}}>
+        <div style={{marginBottom:"12px",paddingBottom:"12px",borderBottom:`1px solid ${C.border}`,width:"100%",display:"flex",justifyContent:"center"}}>
+          <img src="uploads/logo-1777600521020.png" alt="ROHAH" style={{width:"38px",filter:"brightness(0) sepia(1) hue-rotate(10deg) saturate(0.6) brightness(1.1)"}}/>
+        </div>
+        {NAV_ITEMS.map(item=>(
+          <button key={item.id} onClick={()=>setActiveScreen(item.id)} style={{width:"54px",height:"54px",borderRadius:"10px",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"3px",background:activeScreen===item.id?`${role.color}22`:"transparent",color:activeScreen===item.id?role.color:C.creamDim,transition:"0.15s",fontFamily:"DM Sans"}}>
+            <span style={{fontSize:"1.2rem"}}>{item.icon}</span>
+            <span style={{fontSize:"0.58rem",fontWeight:500}}>{item.label}</span>
+          </button>
+        ))}
+        <div style={{marginTop:"auto",paddingTop:"12px",borderTop:`1px solid ${C.border}`,width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:"4px"}}>
+          <a href="index.html" style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"3px",textDecoration:"none",color:C.creamDim,fontSize:"0.58rem",fontWeight:500,padding:"8px"}}>
+            🏠<span>Profil</span>
+          </a>
+          <button onClick={handleLogout} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"3px",background:"none",border:"none",color:C.red,fontSize:"0.58rem",fontWeight:500,padding:"8px",cursor:"pointer",fontFamily:"DM Sans"}}>
+            🚪<span>Logout</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main */}
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        {/* Topbar */}
+        <div style={{height:"50px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 22px",background:C.sidebar,flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+            <span style={{fontSize:"0.86rem",fontWeight:600,color:C.cream}}>
+              {NAV_ITEMS.find(n=>n.id===activeScreen)?.label}
+            </span>
+            <div style={{width:"1px",height:"13px",background:C.border}}></div>
+            <span style={{fontSize:"0.73rem",color:C.creamDim}}>ROHAH Cafe</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:"14px"}}>
+            <div style={{fontSize:"0.78rem",color:C.creamDim,fontVariantNumeric:"tabular-nums"}}>
+              {clock.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:"7px"}}>
+              <div style={{width:"28px",height:"28px",borderRadius:"50%",background:`${role.color}22`,border:`1px solid ${role.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.85rem"}}>
+                {role.icon}
+              </div>
+              <div>
+                <div style={{fontSize:"0.78rem",fontWeight:600,color:C.cream}}>{user.name}</div>
+                <div style={{fontSize:"0.65rem",color:role.color,fontWeight:500,textTransform:"capitalize"}}>{user.role}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Screen */}
+        <div style={{flex:1,overflow:"hidden",display:"flex"}}>
+          {SCREENS[activeScreen]}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROHAH Cafe — Made in Indonesia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: oklch(96.5% 0.012 68);
+    --cream-dark: oklch(92% 0.018 65);
+    --espresso: oklch(18% 0.035 50);
+    --brown-mid: oklch(38% 0.055 50);
+    --gold: oklch(72% 0.11 70);
+    --gold-light: oklch(85% 0.08 70);
+    --warm-white: oklch(98.5% 0.006 65);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--espresso);
+    overflow-x: hidden;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 4rem;
+    background: transparent;
+    transition: background 0.4s, backdrop-filter 0.4s, box-shadow 0.4s;
+  }
+  nav.scrolled {
+    background: oklch(98.5% 0.006 65 / 0.92);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 1px 0 oklch(18% 0.035 50 / 0.08);
+  }
+  .nav-logo img { height: 44px; filter: brightness(0) sepia(1) hue-rotate(10deg) saturate(0.5); }
+  .nav-links { display: flex; gap: 2.4rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--espresso); text-decoration: none; font-weight: 500;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+  .nav-cta {
+    background: var(--espresso); color: var(--cream) !important;
+    padding: 0.55rem 1.4rem; border-radius: 2px;
+    letter-spacing: 0.12em; font-size: 0.74rem;
+    text-decoration: none; text-transform: uppercase; font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+  }
+  .nav-cta:hover { background: var(--gold) !important; color: var(--espresso) !important; }
+  .nav-pos-link {
+    color: var(--gold) !important;
+    border: 1px solid var(--gold);
+    padding: 0.5rem 1.2rem; border-radius: 2px;
+  }
+  .nav-pos-link:hover { background: var(--gold) !important; color: var(--warm-white) !important; }
+
+  /* ─── HERO ─── */
+  #hero {
+    min-height: 100vh;
+    display: grid; grid-template-columns: 1fr 1fr;
+    position: relative; overflow: hidden;
+  }
+  .hero-left {
+    background: var(--espresso);
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 8rem 4rem 4rem 6rem;
+    position: relative;
+  }
+  .hero-left::after {
+    content: '';
+    position: absolute; right: -1px; top: 0; bottom: 0; width: 60px;
+    background: var(--espresso);
+    clip-path: polygon(0 0, 100% 15%, 100% 85%, 0 100%);
+  }
+  .hero-tagline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.8rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 1.6rem; font-style: italic;
+  }
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 5.5vw, 5.5rem);
+    color: var(--warm-white);
+    line-height: 1.05;
+    font-weight: 400;
+  }
+  .hero-title em {
+    font-style: italic; color: var(--gold);
+  }
+  .hero-sub {
+    margin-top: 2rem;
+    font-size: 0.9rem; color: oklch(80% 0.01 68);
+    line-height: 1.8; max-width: 340px; font-weight: 300;
+  }
+  .hero-actions { display: flex; gap: 1rem; margin-top: 3rem; }
+  .btn-primary {
+    background: var(--gold); color: var(--espresso);
+    padding: 0.9rem 2.2rem; text-decoration: none;
+    font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500; border-radius: 2px; transition: 0.2s;
+  }
+  .btn-primary:hover { background: var(--gold-light); }
+  .btn-outline {
+    border: 1px solid oklch(80% 0.01 68 / 0.4);
+    color: oklch(85% 0.01 68); padding: 0.9rem 2.2rem;
+    text-decoration: none; font-size: 0.78rem; letter-spacing: 0.14em;
+    text-transform: uppercase; font-weight: 500; border-radius: 2px; transition: 0.2s;
+  }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+  .hero-right {
+    background: var(--cream-dark);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hero-img-placeholder {
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      45deg,
+      oklch(88% 0.02 65) 0px,
+      oklch(88% 0.02 65) 1px,
+      transparent 1px,
+      transparent 28px
+    );
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1rem;
+  }
+  .hero-img-placeholder span {
+    font-family: monospace; font-size: 0.72rem;
+    color: var(--brown-mid); letter-spacing: 0.06em; text-align: center;
+  }
+  .hero-scroll {
+    position: absolute; bottom: 2.5rem; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+    color: var(--brown-mid); font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase;
+    animation: bob 2s ease-in-out infinite;
+  }
+  .hero-scroll::after { content: '↓'; font-size: 1rem; }
+  @keyframes bob { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
+
+  .hero-badge {
+    position: absolute; bottom: 3rem; right: 3rem;
+    width: 90px; height: 90px; border-radius: 50%;
+    border: 1px solid var(--gold);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--cream-dark);
+  }
+  .hero-badge span:first-child {
+    font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 300;
+    color: var(--espresso);
+  }
+  .hero-badge span:last-child {
+    font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--brown-mid); font-weight: 500;
+  }
+
+  /* ─── SECTION BASE ─── */
+  section { padding: 6rem 6rem; }
+  .section-label {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 0.8rem; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 0.8rem;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif; font-size: clamp(2rem, 3.5vw, 3rem);
+    font-weight: 400; line-height: 1.15;
+  }
+  .divider {
+    width: 48px; height: 1px; background: var(--gold);
+    margin: 1.5rem 0;
+  }
+
+  /* ─── ABOUT ─── */
+  #about {
+    background: var(--espresso);
+    color: var(--cream);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6rem;
+    align-items: center;
+  }
+  #about .section-title { color: var(--warm-white); }
+  #about .section-label { color: var(--gold); }
+  #about .divider { background: var(--gold); }
+  .about-text {
+    font-size: 1rem; line-height: 1.85; color: oklch(80% 0.01 68);
+    font-weight: 300; margin-bottom: 1.4rem;
+  }
+  .about-stats {
+    display: flex; gap: 2.5rem; margin-top: 2.5rem;
+  }
+  .stat-item { display: flex; flex-direction: column; gap: 0.3rem; }
+  .stat-num {
+    font-family: 'Playfair Display', serif; font-size: 2.4rem;
+    color: var(--gold); font-weight: 400; line-height: 1;
+  }
+  .stat-lbl { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: oklch(65% 0.01 68); }
+  .about-img {
+    aspect-ratio: 4/5; border-radius: 2px;
+    background: repeating-linear-gradient(
+      135deg,
+      oklch(25% 0.04 50) 0px,
+      oklch(25% 0.04 50) 1px,
+      transparent 1px,
+      transparent 22px
+    );
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 0.6rem;
+    border: 1px solid oklch(40% 0.04 50);
+  }
+  .about-img span { font-family: monospace; font-size: 0.7rem; color: oklch(55% 0.03 60); }
+
+  /* ─── MENU ─── */
+  #menu { background: var(--cream); }
+  .menu-header { text-align: center; margin-bottom: 3.5rem; }
+  .menu-header .divider { margin: 1.5rem auto; }
+  .menu-tabs {
+    display: flex; gap: 0; justify-content: center;
+    border-bottom: 1px solid oklch(85% 0.015 65);
+    margin-bottom: 3rem;
+  }
+  .menu-tab {
+    padding: 0.8rem 1.8rem;
+    font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase;
+    cursor: pointer; border: none; background: none;
+    color: var(--brown-mid); font-family: 'DM Sans', sans-serif; font-weight: 500;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: 0.2s;
+  }
+  .menu-tab.active { color: var(--espresso); border-bottom-color: var(--gold); }
+  .menu-tab:hover { color: var(--espresso); }
+
+  .menu-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5px; background: oklch(85% 0.015 65);
+    border: 1px solid oklch(85% 0.015 65);
+  }
+  .menu-item {
+    background: var(--cream); padding: 1.6rem 1.8rem;
+    display: flex; justify-content: space-between; align-items: start;
+    transition: background 0.2s;
+    gap: 1rem;
+  }
+  .menu-item:hover { background: var(--warm-white); }
+  .menu-item-info { flex: 1; }
+  .menu-item-name {
+    font-family: 'Playfair Display', serif; font-size: 1rem;
+    font-weight: 500; margin-bottom: 0.35rem;
+  }
+  .menu-item-desc { font-size: 0.78rem; color: var(--brown-mid); line-height: 1.5; font-weight: 300; }
+  .menu-item-price {
+    font-family: 'Cormorant Garamond', serif; font-size: 1.05rem;
+    color: var(--gold); font-weight: 400; white-space: nowrap;
+    padding-top: 2px;
+  }
+  .menu-panel { display: none; }
+  .menu-panel.active { display: block; }
+
+  /* ─── PROMO ─── */
+  #promo { background: var(--cream-dark); }
+  .promo-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-top: 3rem; }
+  .promo-card {
+    background: var(--cream);
+    border-radius: 2px; overflow: hidden;
+    border: 1px solid oklch(87% 0.015 65);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .promo-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px oklch(18% 0.035 50 / 0.10); }
+  .promo-card-img {
+    height: 180px;
+    background: repeating-linear-gradient(
+      45deg,
+      oklch(90% 0.016 65) 0px,
+      oklch(90% 0.016 65) 1px,
+      transparent 1px,
+      transparent 22px
+    );
+    display: flex; align-items: center; justify-content: center;
+    border-bottom: 1px solid oklch(87% 0.015 65);
+  }
+  .promo-card-img span { font-family: monospace; font-size: 0.68rem; color: var(--brown-mid); }
+  .promo-card-body { padding: 1.4rem 1.6rem; }
+  .promo-badge {
+    display: inline-block;
+    background: var(--gold); color: var(--espresso);
+    font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 0.25rem 0.7rem; border-radius: 1px; font-weight: 600;
+    margin-bottom: 0.8rem;
+  }
+  .promo-card-title {
+    font-family: 'Playfair Display', serif; font-size: 1.1rem;
+    margin-bottom: 0.5rem; font-weight: 500;
+  }
+  .promo-card-desc { font-size: 0.8rem; color: var(--brown-mid); line-height: 1.6; font-weight: 300; }
+  .promo-card-footer {
+    margin-top: 1.2rem; padding-top: 1rem;
+    border-top: 1px solid oklch(87% 0.015 65);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .promo-period { font-size: 0.72rem; color: var(--brown-mid); }
+  .promo-price {
+    font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--gold);
+  }
+  .promo-old { text-decoration: line-through; color: var(--brown-mid); font-size: 0.8rem; }
+
+  /* ─── GALLERY ─── */
+  #gallery { background: var(--espresso); color: var(--cream); }
+  #gallery .section-title { color: var(--warm-white); }
+  #gallery .section-label { color: var(--gold); }
+  #gallery .divider { background: var(--gold); }
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 220px);
+    gap: 4px; margin-top: 2.5rem;
+  }
+  .gallery-item {
+    background: oklch(25% 0.04 50);
+    overflow: hidden; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gallery-item:first-child { grid-column: span 2; grid-row: span 2; }
+  .gallery-item:nth-child(4) { grid-column: span 2; }
+  .gallery-item span { font-family: monospace; font-size: 0.68rem; color: oklch(50% 0.03 60); }
+  .gallery-item::after {
+    content: ''; position: absolute; inset: 0;
+    background: var(--espresso); opacity: 0; transition: 0.3s;
+  }
+  .gallery-item:hover::after { opacity: 0.4; }
+  .gallery-ph {
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      135deg,
+      oklch(22% 0.04 50) 0px,
+      oklch(22% 0.04 50) 1px,
+      transparent 1px,
+      transparent 22px
+    );
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 0.5rem;
+  }
+
+  /* ─── CONTACT ─── */
+  #contact { background: var(--cream); }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; margin-top: 3rem; }
+  .contact-info { display: flex; flex-direction: column; gap: 2rem; }
+  .contact-item { display: flex; gap: 1.2rem; align-items: start; }
+  .contact-icon {
+    width: 40px; height: 40px; border: 1px solid var(--gold);
+    border-radius: 2px; display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+  .contact-text h4 {
+    font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 0.3rem; font-weight: 500;
+  }
+  .contact-text p { font-size: 0.9rem; color: var(--brown-mid); line-height: 1.6; font-weight: 300; }
+  .contact-form { display: flex; flex-direction: column; gap: 1rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-field { display: flex; flex-direction: column; gap: 0.4rem; }
+  .form-field label {
+    font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--brown-mid); font-weight: 500;
+  }
+  .form-field input, .form-field textarea, .form-field select {
+    border: 1px solid oklch(85% 0.015 65);
+    background: var(--warm-white); padding: 0.75rem 1rem;
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--espresso);
+    border-radius: 2px; outline: none; transition: border-color 0.2s;
+  }
+  .form-field input:focus, .form-field textarea:focus, .form-field select:focus {
+    border-color: var(--gold);
+  }
+  .form-field textarea { resize: vertical; min-height: 100px; }
+  .btn-submit {
+    background: var(--espresso); color: var(--cream);
+    border: none; padding: 1rem 2.4rem; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 0.78rem;
+    letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500;
+    border-radius: 2px; transition: 0.2s; align-self: start;
+  }
+  .btn-submit:hover { background: var(--gold); color: var(--espresso); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--espresso); color: oklch(65% 0.01 68);
+    padding: 3rem 6rem;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-logo img { height: 36px; filter: brightness(0) invert(1) opacity(0.6); }
+  footer p { font-size: 0.78rem; font-weight: 300; }
+  .footer-links { display: flex; gap: 2rem; }
+  .footer-links a { color: oklch(60% 0.01 68); text-decoration: none; font-size: 0.78rem; transition: 0.2s; }
+  .footer-links a:hover { color: var(--gold); }
+
+  /* ─── ANIMATIONS ─── */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  /* ─── MAP PLACEHOLDER ─── */
+  .map-ph {
+    height: 280px; margin-top: 1.5rem; border-radius: 2px;
+    background: repeating-linear-gradient(
+      45deg,
+      oklch(91% 0.015 65) 0px,
+      oklch(91% 0.015 65) 1px,
+      transparent 1px,
+      transparent 20px
+    );
+    border: 1px solid oklch(85% 0.015 65);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .map-ph span { font-family: monospace; font-size: 0.7rem; color: var(--brown-mid); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-logo">
+    <img src="uploads/logo-1777600521020.png" alt="ROHAH Cafe">
+  </div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#promo">Promo</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="pos.html" class="nav-pos-link">POS System</a></li>
+  </ul>
+  <a href="#menu" class="nav-cta">Lihat Menu</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-left">
+    <p class="hero-tagline">Cafe · Boutique · Space · Est. 2023</p>
+    <h1 class="hero-title">
+      Rasa yang<br>
+      <em>Hangat,</em><br>
+      Kenangan<br>
+      Abadi
+    </h1>
+    <p class="hero-sub">Nikmati sajian otentik Indonesia dalam suasana yang nyaman dan penuh cerita. Dari Mie Yamin Tasik hingga Rohah Signature — setiap tegukan, setiap suapan, adalah pengalaman.</p>
+    <div class="hero-actions">
+      <a href="#menu" class="btn-primary">Jelajahi Menu</a>
+      <a href="#about" class="btn-outline">Tentang Kami</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <img src="uploads/officeROHAH.jpg" alt="ROHAH Cafe" style="width:100%;height:100%;object-fit:cover;object-position:center top;">
+    <div class="hero-badge">
+      <span>23</span>
+      <span>Est.</span>
+    </div>
+  </div>
+  <div class="hero-scroll">Scroll</div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="reveal">
+    <p class="section-label">Our Story</p>
+    <h2 class="section-title">Dari Dapur Rumah,<br>Ke Meja Anda</h2>
+    <div class="divider"></div>
+    <p class="about-text">ROHAH lahir dari kecintaan mendalam terhadap cita rasa Indonesia yang sesungguhnya. Kami percaya bahwa makanan terbaik adalah yang dimasak dengan hati — menggunakan bahan-bahan segar pilihan dan resep yang telah teruji waktu.</p>
+    <p class="about-text">Setiap hidangan kami adalah undangan untuk kembali ke akar budaya, merayakan kekayaan kuliner Nusantara dalam ruang yang hangat dan akrab.</p>
+    <div class="about-stats">
+      <div class="stat-item">
+        <span class="stat-num">30+</span>
+        <span class="stat-lbl">Menu Pilihan</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">2+</span>
+        <span class="stat-lbl">Tahun Berdiri</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">5★</span>
+        <span class="stat-lbl">Rating Pelanggan</span>
+      </div>
+    </div>
+  </div>
+  <div class="about-img reveal">
+    <span>📸</span>
+    <span style="font-family:monospace;font-size:0.68rem;color:oklch(55% 0.03 60);">foto suasana cafe</span>
+  </div>
+</section>
+
+<!-- MENU -->
+<section id="menu">
+  <div class="menu-header reveal">
+    <p class="section-label">Sajian Pilihan</p>
+    <h2 class="section-title">Menu ROHAH</h2>
+    <div class="divider"></div>
+    <p style="color:var(--brown-mid);font-size:0.88rem;max-width:520px;margin:0 auto;line-height:1.7;font-weight:300;">Dari makanan berat hingga minuman spesial — <strong>70+ menu pilihan</strong> tersaji untuk memanjakan selera Anda.</p>
+  </div>
+
+  <div class="menu-tabs">
+    <button class="menu-tab active" data-tab="main">Main Dish</button>
+    <button class="menu-tab" data-tab="side">Side Dish</button>
+    <button class="menu-tab" data-tab="coffee">Coffee</button>
+    <button class="menu-tab" data-tab="noncoffee">Non-Coffee</button>
+    <button class="menu-tab" data-tab="tea">Tea</button>
+    <button class="menu-tab" data-tab="toppings">Toppings</button>
+  </div>
+
+  <div id="tab-main" class="menu-panel active">
+    <div class="menu-grid">
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Mie Yamin Tasik Manis</div><div class="menu-item-desc">Mie kuning dengan ayam kampung & kecap manis khas Tasikmalaya</div></div><div class="menu-item-price">Rp 35.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Mie Yamin Tasik Asin</div><div class="menu-item-desc">Mie kuning gurih dengan topping ayam kampung pilihan</div></div><div class="menu-item-price">Rp 35.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Mie Ayam Kampung</div><div class="menu-item-desc">Mie segar dengan topping ayam kampung lembut & kuah gurih</div></div><div class="menu-item-price">Rp 30.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Nasi Sop Buntut</div><div class="menu-item-desc">Nasi putih dengan sop buntut sapi kaya rempah pilihan</div></div><div class="menu-item-price">Rp 65.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Nasi Sop Iga</div><div class="menu-item-desc">Nasi putih dengan sop iga sapi kuah bening & rempah</div></div><div class="menu-item-price">Rp 65.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Nasi Ayam Bakar</div><div class="menu-item-desc">Ayam kampung bakar dengan nasi, lalapan & sambal</div></div><div class="menu-item-price">Rp 45.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Nasi Ayam Goreng</div><div class="menu-item-desc">Ayam goreng crispy dengan nasi, lalapan & sambal</div></div><div class="menu-item-price">Rp 45.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Rice Bowl Se'i Sapi</div><div class="menu-item-desc">Daging se'i sapi asap di atas nasi hangat dengan saus spesial</div></div><div class="menu-item-price">Rp 40.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Rice Bowl Chicken Teriyaki</div><div class="menu-item-desc">Ayam teriyaki juicy di atas nasi dengan saus teriyaki homemade</div></div><div class="menu-item-price">Rp 35.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Chicken Steak</div><div class="menu-item-desc">Dada ayam panggang dengan saus mushroom & kentang</div></div><div class="menu-item-price">Rp 65.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Kwetiaw Goreng</div><div class="menu-item-desc">Kwetiaw goreng dengan sayuran segar & telur</div></div><div class="menu-item-price">Rp 37.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Nasi Goreng Special</div><div class="menu-item-desc">Nasi goreng spesial dengan bumbu rahasia dapur Rohah</div></div><div class="menu-item-price">Rp 37.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Bubur Ayam</div><div class="menu-item-desc">Bubur lembut dengan suwiran ayam, kerupuk & pelengkap</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Tekwan</div><div class="menu-item-desc">Sup khas Palembang dengan bola ikan & kuah udang gurih</div></div><div class="menu-item-price">Rp 30.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Pangsit Kuah</div><div class="menu-item-desc">Pangsit isi ayam & udang dalam kuah kaldu bening</div></div><div class="menu-item-price">Rp 25.000</div></div>
+    </div>
+  </div>
+
+  <div id="tab-side" class="menu-panel">
+    <div class="menu-grid">
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Asinan Betawi</div><div class="menu-item-desc">Sayuran segar dengan kuah asinan pedas-manis khas Betawi</div></div><div class="menu-item-price">Rp 30.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Asinan Buah</div><div class="menu-item-desc">Aneka buah segar dengan kuah asinan segar & cabe rawit</div></div><div class="menu-item-price">Rp 30.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Pempek (7 pcs)</div><div class="menu-item-desc">Pempek ikan tenggiri asli Palembang dengan cuko khas</div></div><div class="menu-item-price">Rp 45.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Singkong Keju Manis/Asin</div><div class="menu-item-desc">Singkong goreng renyah dengan taburan keju parut melimpah</div></div><div class="menu-item-price">Rp 27.500</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">French Fries</div><div class="menu-item-desc">Kentang goreng crispy dengan pilihan saus favorit</div></div><div class="menu-item-price">Rp 20.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Dimsum Ayam (4 pcs)</div><div class="menu-item-desc">Dimsum ayam kukus dengan saus spesial</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Dimsum Mix (6 pcs)</div><div class="menu-item-desc">Aneka dimsum kukus pilihan dengan saus celup</div></div><div class="menu-item-price">Rp 40.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Cilok Goreng</div><div class="menu-item-desc">Cilok goreng renyah dengan bumbu kacang & kecap</div></div><div class="menu-item-price">Rp 18.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Croissant</div><div class="menu-item-desc">Croissant butter flaky, cocok menemani kopi pagi</div></div><div class="menu-item-price">Rp 27.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Cireng</div><div class="menu-item-desc">Cireng khas Sunda goreng renyah dengan sambal rujak</div></div><div class="menu-item-price">Rp 18.000</div></div>
+    </div>
+  </div>
+
+  <div id="tab-coffee" class="menu-panel">
+    <div class="menu-grid">
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Americano Hot/Ice</div><div class="menu-item-desc">Espresso panjang dengan air panas atau dingin, bold & clean</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Rohah Signature</div><div class="menu-item-desc">Racikan khas barista Rohah — cita rasa unik yang tak terlupakan</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Long Black</div><div class="menu-item-desc">Double ristretto dituangkan di atas air panas</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Cappuccino</div><div class="menu-item-desc">Espresso klasik dengan steamed milk & thick microfoam</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Hazelnut Latte</div><div class="menu-item-desc">Espresso dengan sirup hazelnut & susu segar</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Pandan Latte</div><div class="menu-item-desc">Espresso dengan aroma pandan wangi khas Indonesia</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Butterscotch Original</div><div class="menu-item-desc">Kopi dengan sirup butterscotch manis & creamy</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Butterscotch Sea Salt</div><div class="menu-item-desc">Butterscotch latte dengan sentuhan garam laut</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Gula Aren Original</div><div class="menu-item-desc">Espresso dengan gula aren asli Nusantara</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Gula Aren Klepon Latte</div><div class="menu-item-desc">Perpaduan espresso, gula aren & aroma klepon pandan</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Caramel Latte</div><div class="menu-item-desc">Espresso dengan karamel manis & susu segar</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Latte</div><div class="menu-item-desc">Espresso lembut berpadu susu segar pilihan</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Frappe de Tiramisu</div><div class="menu-item-desc">Blended frappe kopi tiramisu yang dingin & rich</div></div><div class="menu-item-price">Rp 30.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Nutty Caramel Latte</div><div class="menu-item-desc">Espresso dengan kacang hazel & karamel double layer</div></div><div class="menu-item-price">Rp 30.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Nutella Latte</div><div class="menu-item-desc">Espresso dengan Nutella cokelat hazelnut melimpah</div></div><div class="menu-item-price">Rp 25.000</div></div>
+    </div>
+  </div>
+
+  <div id="tab-noncoffee" class="menu-panel">
+    <div class="menu-grid">
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Dark Chocolate</div><div class="menu-item-desc">Cokelat pekat premium dengan tekstur creamy & hangat</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Klepon</div><div class="menu-item-desc">Inspirasi klepon — pandan, gula jawa & santan khas Nusantara</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Red Velvet</div><div class="menu-item-desc">Minuman red velvet creamy dengan whipped cream</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Thai Tea</div><div class="menu-item-desc">Teh Thailand manis dengan creamer susu yang khas</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Taro Original</div><div class="menu-item-desc">Minuman taro creamy yang manis & menyegarkan</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Taro Sea Salt</div><div class="menu-item-desc">Taro creamy dengan sentuhan garam laut yang memanjakan</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Matcha Latte</div><div class="menu-item-desc">Matcha premium dengan susu segar pilihan</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Matcha Sea Salt</div><div class="menu-item-desc">Matcha latte dengan topping garam laut yang unik</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Snow Ice</div><div class="menu-item-desc">Es serut halus dengan topping & sirup pilihan</div></div><div class="menu-item-price">Rp 35.000</div></div>
+    </div>
+  </div>
+
+  <div id="tab-tea" class="menu-panel">
+    <div class="menu-grid">
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Lemon Tea</div><div class="menu-item-desc">Teh segar dengan perasan lemon asli</div></div><div class="menu-item-price">Rp 18.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Lychee Tea</div><div class="menu-item-desc">Teh manis dengan aroma lychee yang menyegarkan</div></div><div class="menu-item-price">Rp 18.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Lemon Lychee Tea</div><div class="menu-item-desc">Perpaduan lemon & lychee dalam teh dingin segar</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Teh Dilmah Peppermint</div><div class="menu-item-desc">Teh Dilmah premium dengan aroma peppermint segar</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Teh Dilmah Ginger & Mint</div><div class="menu-item-desc">Perpaduan jahe & mint dalam teh Dilmah premium</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Teh Dilmah Vanilla</div><div class="menu-item-desc">Teh Dilmah dengan sentuhan vanilla yang lembut</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Teh Dilmah Earl Grey</div><div class="menu-item-desc">Earl Grey klasik dengan bergamot khas Dilmah</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Teh Dilmah Chamomile</div><div class="menu-item-desc">Bunga chamomile Dilmah, menenangkan & floral</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Teh Dilmah Green Tea</div><div class="menu-item-desc">Green tea Dilmah premium dengan rasa ringan & segar</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Teh Dilmah Coconut & Mango</div><div class="menu-item-desc">Perpaduan eksotis kelapa & mangga dalam teh premium</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Artisan Tea Chamomile</div><div class="menu-item-desc">Chamomile artisan grade premium</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Artisan Tea Coffee Gayo</div><div class="menu-item-desc">Teh artisan blend dengan kopi Gayo Aceh</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Artisan Tea Green Tea</div><div class="menu-item-desc">Green tea artisan pilihan dengan kualitas premium</div></div><div class="menu-item-price">Rp 25.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Artisan Tea Rose Flower</div><div class="menu-item-desc">Teh bunga mawar artisan yang harum & elegan</div></div><div class="menu-item-price">Rp 25.000</div></div>
+    </div>
+  </div>
+  <div id="tab-toppings" class="menu-panel">
+    <div class="menu-grid">
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Kerupuk Putih</div><div class="menu-item-desc">Tambahan kerupuk putih renyah untuk melengkapi hidangan</div></div><div class="menu-item-price">Rp 4.500</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Nasi Putih</div><div class="menu-item-desc">Nasi putih pulen tambahan</div></div><div class="menu-item-price">Rp 7.000</div></div>
+      <div class="menu-item"><div class="menu-item-info"><div class="menu-item-name">Telur Ceplok / Rebus</div><div class="menu-item-desc">Tambahan telur ayam pilihan ceplok atau rebus</div></div><div class="menu-item-price">Rp 5.000</div></div>
+    </div>
+  </div>
+
+</section>
+<section id="promo">
+  <div class="reveal">
+    <p class="section-label">Special Offers</p>
+    <h2 class="section-title">Promo Bulan Ini</h2>
+    <div class="divider"></div>
+  </div>
+  <div class="promo-grid reveal">
+    <div class="promo-card">
+      <div class="promo-card-img"><span>🍜 promo bundling</span></div>
+      <div class="promo-card-body">
+        <span class="promo-badge">Bundling</span>
+        <div class="promo-card-title">Mie + Minuman</div>
+        <div class="promo-card-desc">Paket hemat Mie Yamin Tasik atau Mie Ayam Kampung dengan minuman pilihan</div>
+        <div class="promo-card-footer">
+          <span class="promo-period">Setiap hari</span>
+          <div><span class="promo-old">Rp 53.000</span> <span class="promo-price">Rp 42.000</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="promo-card">
+      <div class="promo-card-img"><span>☕ happy hour</span></div>
+      <div class="promo-card-body">
+        <span class="promo-badge">Happy Hour</span>
+        <div class="promo-card-title">Coffee 2 for 1</div>
+        <div class="promo-card-desc">Beli 1 minuman kopi, gratis 1 lagi. Berlaku untuk semua varian coffee kami.</div>
+        <div class="promo-card-footer">
+          <span class="promo-period">Sen–Jum, 14.00–16.00</span>
+          <div><span class="promo-price">Buy 1 Get 1</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="promo-card">
+      <div class="promo-card-img"><span>🎂 ulang tahun</span></div>
+      <div class="promo-card-body">
+        <span class="promo-badge">Birthday</span>
+        <div class="promo-card-title">Gratis Minuman di Hari Ulang Tahun</div>
+        <div class="promo-card-desc">Tunjukkan KTP dan dapatkan 1 minuman gratis pilihan di hari ulang tahun Anda.</div>
+        <div class="promo-card-footer">
+          <span class="promo-period">Hari ulang tahun</span>
+          <div><span class="promo-price">Gratis!</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="reveal">
+    <p class="section-label">Moments</p>
+    <h2 class="section-title">Galeri ROHAH</h2>
+    <div class="divider"></div>
+  </div>
+  <div class="gallery-grid reveal">
+    <div class="gallery-item">
+      <div class="gallery-ph"><span>📸</span><span>interior cafe<br>wide shot</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-ph"><span>📸</span><span>signature coffee</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-ph"><span>📸</span><span>mie yamin tasik</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-ph"><span>📸</span><span>cafe atmosphere</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-ph"><span>📸</span><span>barista at work</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="reveal">
+    <p class="section-label">Find Us</p>
+    <h2 class="section-title">Kunjungi Kami</h2>
+    <div class="divider"></div>
+  </div>
+  <div class="contact-grid">
+    <div>
+      <div class="contact-info reveal">
+        <div class="contact-item">
+          <div class="contact-icon">📍</div>
+          <div class="contact-text">
+            <h4>Alamat</h4>
+            <p>Ruko Jl. Festive Garden, Jl. Grand Wisata No.83<br>Lambangsari, Kec. Tambun Sel.<br>Kabupaten Bekasi, Jawa Barat 17510</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">🕐</div>
+          <div class="contact-text">
+            <h4>Jam Buka</h4>
+            <p>Senin – Jumat: 08.00 – 22.00<br>Sabtu – Minggu: 08.00 – 23.00</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">📱</div>
+          <div class="contact-text">
+            <h4>Kontak</h4>
+            <p>Instagram: @rohah.cafe<br>Bekasi, Jawa Barat</p>
+          </div>
+        </div>
+      </div>
+      <div class="map-ph reveal" style="padding:0;overflow:hidden;">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.0!2d107.0!3d-6.2!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zROKAk1JPSEFIIENBZMU!5e0!3m2!1sid!2sid!4v1683000000000!5m2!1sid!2sid" width="100%" height="280" style="border:0;filter:sepia(0.3) contrast(1.1);" allowfullscreen="" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div class="contact-form reveal">
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:500;margin-bottom:0.5rem;">Kirim Pesan</h3>
+      <p style="font-size:0.83rem;color:var(--brown-mid);margin-bottom:1.5rem;font-weight:300;">Reservasi, pertanyaan, atau feedback — kami senang mendengar dari Anda.</p>
+      <div class="form-row">
+        <div class="form-field"><label>Nama</label><input type="text" placeholder="Nama Anda"></div>
+        <div class="form-field"><label>Nomor HP</label><input type="tel" placeholder="+62 8xx"></div>
+      </div>
+      <div class="form-field"><label>Email</label><input type="email" placeholder="email@anda.com"></div>
+      <div class="form-field">
+        <label>Keperluan</label>
+        <select>
+          <option>Reservasi Meja</option>
+          <option>Pertanyaan Menu</option>
+          <option>Private Event</option>
+          <option>Feedback</option>
+          <option>Lainnya</option>
+        </select>
+      </div>
+      <div class="form-field"><label>Pesan</label><textarea placeholder="Tulis pesan Anda..."></textarea></div>
+      <button class="btn-submit">Kirim Pesan →</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo"><img src="uploads/logo-1777600521020.png" alt="ROHAH Cafe"></div>
+  <p>© 2023–2026 ROHAH Cafe. Made in Indonesia.</p>
+  <div class="footer-links">
+    <a href="#">Instagram</a>
+    <a href="#">Facebook</a>
+    <a href="pos.html">POS System</a>
+  </div>
+</footer>
+
+<script>
+  // Navbar scroll
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 60);
+  });
+
+  // Menu tabs
+  document.querySelectorAll('.menu-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.menu-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      const panel = document.getElementById('tab-' + tab.dataset.tab);
+      if (panel) panel.classList.add('active');
+    });
+  });
+
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.12 });
+  reveals.forEach(r => observer.observe(r));
+</script>
+</body>
+</html>
