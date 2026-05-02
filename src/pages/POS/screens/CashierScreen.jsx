@@ -36,7 +36,15 @@ export default function CashierScreen({ user }) {
     return matchCat && matchSearch
   })
 
+  const availableStock = (item) => {
+    const stock = item.stock ?? 99
+    if (stock >= 99) return Infinity
+    const inCart = cartQty(item.id)
+    return Math.max(0, stock - inCart)
+  }
+
   const addToCart = (item) => {
+    if (availableStock(item) <= 0) return
     setCart((prev) => {
       const ex = prev.find((c) => c.id === item.id)
       if (ex) return prev.map((c) => c.id === item.id ? { ...c, qty: c.qty + 1 } : c)
@@ -45,6 +53,10 @@ export default function CashierScreen({ user }) {
   }
 
   const updateQty = (id, delta) => {
+    if (delta > 0) {
+      const item = menuItems.find((m) => m.id === id)
+      if (item && availableStock(item) <= 0) return
+    }
     setCart((prev) =>
       prev.map((c) => c.id === id ? { ...c, qty: Math.max(0, c.qty + delta) } : c)
           .filter((c) => c.qty > 0)
@@ -87,6 +99,20 @@ export default function CashierScreen({ user }) {
       }
       const items = cart.map((c) => ({ menu_item_id: c.id, name: c.name, price: c.price, qty: c.qty }))
       await DB.saveTransaction(txn, items)
+
+      // Decrement stock for tracked items (stock < 99)
+      const stockUpdates = cart.filter((c) => (c.stock ?? 99) < 99)
+      await Promise.all(
+        stockUpdates.map((c) => {
+          const newStock = Math.max(0, (c.stock ?? 0) - c.qty)
+          return DB.updateMenuItem(c.id, { stock: newStock })
+        })
+      )
+      // Refresh menu items so disabled state updates immediately
+      if (stockUpdates.length > 0) {
+        const updated = await DB.getMenuItems()
+        if (updated && updated.length > 0) setMenuItems(updated)
+      }
     } catch (e) {
       console.error(e)
     }
@@ -156,14 +182,16 @@ export default function CashierScreen({ user }) {
             const qty = cartQty(item.id)
             const stock = item.stock ?? 99
             const habis = stock <= 0
+            const maxed = !habis && stock < 99 && qty >= stock
+            const disabled = habis || maxed
             const si = stockInfo(stock)
             return (
               <button
                 key={item.id}
-                onClick={() => !habis && addToCart(item)}
-                disabled={habis}
+                onClick={() => !disabled && addToCart(item)}
+                disabled={disabled}
                 className={`relative text-left p-3 rounded-xl border transition-all ${
-                  habis
+                  disabled
                     ? 'border-pos-border/30 bg-pos-card/40 opacity-50 cursor-not-allowed'
                     : qty > 0
                       ? 'border-gold/60 bg-gold/10'
@@ -250,7 +278,8 @@ export default function CashierScreen({ user }) {
                   <span className="text-cream text-xs w-5 text-center">{item.qty}</span>
                   <button
                     onClick={() => updateQty(item.id, 1)}
-                    className="w-6 h-6 rounded bg-pos-card border border-pos-border text-cream/60 hover:text-cream text-xs flex items-center justify-center"
+                    disabled={(() => { const m = menuItems.find((m) => m.id === item.id); return m && (m.stock ?? 99) < 99 && item.qty >= (m.stock ?? 0) })()}
+                    className="w-6 h-6 rounded bg-pos-card border border-pos-border text-cream/60 hover:text-cream text-xs flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
                   >+</button>
                   <button
                     onClick={() => removeItem(item.id)}

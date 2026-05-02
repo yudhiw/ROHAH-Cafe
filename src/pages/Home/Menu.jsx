@@ -35,7 +35,7 @@ export default function Menu() {
     <section id="menu" className="bg-cream py-24 px-6">
       <div className="max-w-6xl mx-auto">
 
-        {/* Header */}
+        {/* Header — static, safe to animate */}
         <div className="text-center mb-12 reveal">
           <p className="font-cormorant italic text-brown-mid tracking-widest text-sm mb-3">
             — Sajian Pilihan Kami
@@ -45,16 +45,15 @@ export default function Menu() {
           </h2>
         </div>
 
-        {/* Loading */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4 reveal">
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
             <p className="text-espresso/40 text-sm font-light">Memuat menu...</p>
           </div>
         ) : (
           <>
-            {/* Tabs */}
-            <div className="flex flex-wrap justify-center gap-2 mb-10 reveal">
+            {/* Tabs — no reveal: rendered after async load, observer already ran */}
+            <div className="flex flex-wrap justify-center gap-2 mb-10">
               {categories.map((cat) => (
                 <button
                   key={cat}
@@ -71,7 +70,7 @@ export default function Menu() {
             </div>
 
             {/* Grid */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 reveal">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {items.length === 0 ? (
                 <div className="col-span-3 text-center py-12 text-espresso/40 text-sm">
                   Tidak ada menu tersedia saat ini.
@@ -97,7 +96,7 @@ export default function Menu() {
               ))}
             </div>
 
-            <div className="text-center mt-12 reveal">
+            <div className="text-center mt-12">
               <a
                 href="/#/pos"
                 className="inline-block px-8 py-3 bg-espresso text-cream rounded font-medium text-sm hover:bg-brown-mid transition-colors"
