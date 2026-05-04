@@ -5,6 +5,7 @@ import About from './About'
 import Menu from './Menu'
 import Promo from './Promo'
 import Gallery from './Gallery'
+import Testimonial from './Testimonial'
 import Contact from './Contact'
 import Footer from './Footer'
 
@@ -37,6 +38,7 @@ export default function Home() {
       <Menu />
       <Promo />
       <Gallery />
+      <Testimonial />
       <Contact />
       <Footer />
     </div>

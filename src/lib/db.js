@@ -70,6 +70,22 @@ const localDB = {
     }
     lsSet('customers', list)
   },
+
+  // ── Kitchen queue ──────────────────────────────────────────────────────────
+  getKitchenOrders() {
+    return lsGet('kitchen_orders', [])
+  },
+  saveKitchenOrder(order) {
+    const orders = lsGet('kitchen_orders', [])
+    orders.unshift(order)
+    lsSet('kitchen_orders', orders.slice(0, 100))
+  },
+  updateKitchenOrder(id, status) {
+    const orders = lsGet('kitchen_orders', [])
+    const idx = orders.findIndex((o) => o.id === id)
+    if (idx >= 0) orders[idx] = { ...orders[idx], status }
+    lsSet('kitchen_orders', orders)
+  },
 }
 
 // ─── DB facade ─────────────────────────────────────────────────────────────
@@ -239,6 +255,16 @@ export const DB = {
       }
     }
     return localDB.getCustomers()
+  },
+
+  async getKitchenOrders() {
+    return localDB.getKitchenOrders()
+  },
+  async saveKitchenOrder(order) {
+    localDB.saveKitchenOrder(order)
+  },
+  async updateKitchenOrder(id, status) {
+    localDB.updateKitchenOrder(id, status)
   },
 
   async upsertCustomer(customer) {

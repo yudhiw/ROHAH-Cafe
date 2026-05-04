@@ -1,9 +1,10 @@
+// Upload foto ke: public_html/images/gallery/1.jpg s/d 5.jpg
 const galleryItems = [
-  { emoji: '🏛️',  label: 'Interior Utama',   wide: true, tall: true },
-  { emoji: '☕',  label: 'Kopi Signature',    wide: false, tall: false },
-  { emoji: '🍜',  label: 'Mie Yamin Tasik',  wide: false, tall: false },
-  { emoji: '🌿',  label: 'Sudut Hijau',       wide: true, tall: false },
-  { emoji: '🎂',  label: 'Sajian Spesial',    wide: false, tall: false },
+  { id: 1, emoji: '🏛️', label: 'Interior Utama',  style: { gridColumn: 'span 2', gridRow: 'span 2' } },
+  { id: 2, emoji: '☕',  label: 'Kopi Signature',  style: {} },
+  { id: 3, emoji: '🍜',  label: 'Mie Yamin Tasik', style: {} },
+  { id: 4, emoji: '🌿',  label: 'Sudut Hijau',     style: { gridColumn: 'span 2' } },
+  { id: 5, emoji: '🎂',  label: 'Sajian Spesial',  style: {} },
 ]
 
 export default function Gallery() {
@@ -19,26 +20,25 @@ export default function Gallery() {
           </h2>
         </div>
 
+        {/* Desktop grid */}
         <div
-          className="reveal"
+          className="reveal hidden md:grid"
           style={{
-            display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
             gridTemplateRows: 'repeat(2, 220px)',
             gap: '12px',
-            height: '452px',
           }}
         >
-          {/* Item 1: spans 2 cols, 2 rows */}
-          <GalleryItem item={galleryItems[0]} style={{ gridColumn: 'span 2', gridRow: 'span 2' }} />
-          {/* Item 2 */}
-          <GalleryItem item={galleryItems[1]} style={{}} />
-          {/* Item 3 */}
-          <GalleryItem item={galleryItems[2]} style={{}} />
-          {/* Item 4: spans 2 cols */}
-          <GalleryItem item={galleryItems[3]} style={{ gridColumn: 'span 2' }} />
-          {/* Item 5 */}
-          <GalleryItem item={galleryItems[4]} style={{}} />
+          {galleryItems.map((item) => (
+            <GalleryItem key={item.id} item={item} style={item.style} />
+          ))}
+        </div>
+
+        {/* Mobile: simple 2-col grid */}
+        <div className="grid grid-cols-2 gap-3 md:hidden">
+          {galleryItems.map((item) => (
+            <GalleryItem key={item.id} item={item} style={{ height: 160 }} />
+          ))}
         </div>
       </div>
     </section>
@@ -49,24 +49,24 @@ function GalleryItem({ item, style }) {
   return (
     <div
       className="relative rounded-xl overflow-hidden group cursor-pointer"
-      style={{
-        background: 'linear-gradient(135deg, #2a1a08 0%, #1a1008 100%)',
-        border: '1px solid #3a2e1a',
-        ...style,
-      }}
+      style={{ background: 'linear-gradient(135deg,#2a1a08,#1a1008)', border: '1px solid #3a2e1a', ...style }}
     >
+      {/* Emoji placeholder always behind */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="text-5xl mb-3 opacity-60">{item.emoji}</div>
-        <p className="font-cormorant italic text-gold/50 text-sm">{item.label}</p>
+        <div className="text-5xl mb-2 opacity-50">{item.emoji}</div>
+        <p className="font-cormorant italic text-gold/40 text-sm">{item.label}</p>
       </div>
+
+      {/* Real photo on top — hides emoji when loaded */}
+      <img
+        src={`/images/gallery/${item.id}.jpg`}
+        alt={item.label}
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={(e) => { e.target.style.visibility = 'hidden' }}
+      />
+
       {/* Hover overlay */}
-      <div className="absolute inset-0 bg-gold/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-gold/70 flex items-center justify-center">
-          <span className="text-gold text-xl">+</span>
-        </div>
-      </div>
-      {/* Bottom label on hover */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-espresso/80 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+      <div className="absolute inset-0 bg-gold/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
         <p className="text-cream/90 text-xs font-medium">{item.label}</p>
       </div>
     </div>
